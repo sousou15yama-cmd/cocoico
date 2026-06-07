@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#FF6A2B">
+<title>COCOiCO — 今日どこ行く？を、ごちそうに。</title>
+<style>
+/* =======================================================================
+   COCOiCO「Sizzle & Gold ＋」
+   単一HTML / 外部依存ゼロ / file:// 直開きOK / 機能はロジック層に分離
+   ======================================================================= */
+@property --ang { syntax:'<angle>'; initial-value:0deg; inherits:false; }
+
+:root{
+  --bg:#FFF6EC; --surface:#FFFDF9; --surface-sub:#FFF0DD; --ink:#2A1410; --sub:#7A5A48;
+  --line:#EADBC8; --primary:#FF6A2B; --primary-press:#E5571C; --secondary:#C0341C;
+  --accent:#FFC23C; --accent-deep:#FFB02E; --success:#2E9E6B; --danger:#D64541;
+  --rare-legend:#FFC23C; --rare-mid:#FF6A2B; --rare-common:#C0341C; --on-primary:#FFFFFF;
+  --cafe-band-a:#3A2418; --cafe-band-b:#5A3A22; --cafe-bg:#FBF1E2;
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:24px; --space-6:32px; --space-7:48px;
+  --app-max:460px; --tap-min:44px;
+  --fs-h1:clamp(28px,7vw,34px); --fs-h2:22px; --fs-card:18px; --fs-body:15px; --fs-sub:13px; --fs-score:34px; --fs-score-xl:48px;
+  --lh-head:1.15; --lh-body:1.7; --ls-head:-0.02em;
+  --z-nav:50; --z-overlay:90; --z-modal:100;
+  --dur-fast:120ms; --dur-base:260ms; --dur-trans:520ms;
+  --ease-out:cubic-bezier(.22,1,.36,1); --ease-overshoot:cubic-bezier(.34,1.56,.64,1); --ease-wipe:cubic-bezier(.7,0,.2,1);
+  --grad-bg:radial-gradient(120% 90% at 50% 0%, #FFE9C7 0%, #FFF6EC 46%, #FFEFD9 100%);
+  --grad-primary:linear-gradient(135deg, #FF8A3D 0%, #FF6A2B 48%, #E5431A 100%);
+  --grad-gold:linear-gradient(180deg, #FFD25A 0%, #FFB02E 55%, #FF7A2F 100%);
+  --grad-quiz:linear-gradient(135deg, #FF7A2F 0%, #FF9F1C 100%);
+  --grad-text:linear-gradient(135deg, #FF8A3D 0%, #C0341C 100%);
+  --grad-glow:radial-gradient(60% 60% at 50% 30%, rgba(255,210,90,.55) 0%, rgba(255,106,43,0) 70%);
+  --grad-cafe:linear-gradient(135deg, #3A2418 0%, #5A3A22 100%);
+  --sh-1:0 1px 2px rgba(80,40,20,.06), 0 2px 8px rgba(80,40,20,.05);
+  --sh-2:0 4px 14px rgba(120,60,25,.10);
+  --sh-3:0 10px 30px rgba(120,60,25,.16);
+  --sh-press:0 1px 3px rgba(120,60,25,.12);
+  --sh-fab:0 6px 18px rgba(255,106,43,.42);
+  --sh-glow-gold:0 0 0 1px rgba(255,194,60,.4), 0 0 22px rgba(255,178,46,.45);
+  --sh-inset:inset 0 1px 0 rgba(255,255,255,.6);
+  --r-xs:8px; --r-sm:12px; --r-md:16px; --r-lg:22px; --r-xl:28px; --r-pill:999px; --r-bubble:22px 22px 22px 6px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#1A1008; --surface:#241710; --surface-sub:#2E1E13; --ink:#FCEBD8; --sub:#C7A488;
+    --line:#3D2A1C; --cafe-bg:#211710;
+    --grad-bg:radial-gradient(120% 90% at 50% 0%, #3A220F 0%, #1A1008 52%, #241405 100%);
+    --sh-1:0 1px 2px rgba(0,0,0,.4); --sh-2:0 6px 18px rgba(0,0,0,.45); --sh-3:0 12px 34px rgba(0,0,0,.55);
+    --sh-press:0 1px 3px rgba(0,0,0,.5); --sh-inset:inset 0 1px 0 rgba(255,255,255,.08);
+  }
+}
+
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; padding:0;}
+body{
+  font-family:-apple-system,"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;
+  font-feature-settings:"palt" 1; color:var(--ink); background:var(--bg);
+  -webkit-font-smoothing:antialiased; overscroll-behavior-y:none;
+}
+body::before{ /* 背景グラデ + 極薄ノイズ */
+  content:""; position:fixed; inset:0; z-index:-2; background:var(--grad-bg);
+}
+body::after{
+  content:""; position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:.5;
+  background:repeating-linear-gradient(0deg, rgba(0,0,0,.012) 0 1px, transparent 1px 2px);
+}
+.app{ max-width:var(--app-max); margin:0 auto; padding:0 0 calc(96px + env(safe-area-inset-bottom)); position:relative; min-height:100vh; }
+.num{ font-variant-numeric:tabular-nums; font-feature-settings:'tnum'; font-weight:800; }
+.score-skew{ display:inline-block; transform:skewX(-6deg); }
+.grad-text{
+  color:var(--secondary);
+  background:var(--grad-text); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+}
+@media (prefers-color-scheme: dark){ .grad-text{ background:var(--grad-gold); -webkit-background-clip:text; background-clip:text; } }
+
+/* ---------- プリン・タップ（全タップ要素の気持ちよさ） ---------- */
+.tap{ transition:transform var(--dur-base) var(--ease-overshoot), box-shadow var(--dur-fast) linear; touch-action:manipulation; }
+.tap:active{ transform:scale(.95); transition:transform 70ms ease-out; }
+
+/* =================== ヘッダー（暖簾） =================== */
+header.noren{
+  position:sticky; top:0; z-index:var(--z-nav); padding:env(safe-area-inset-top) 0 0;
+}
+.noren-in{
+  position:relative; margin:0; padding:14px 16px 16px; color:var(--on-primary);
+  background:var(--grad-primary); border-radius:0 0 var(--r-lg) var(--r-lg);
+  box-shadow:0 6px 18px rgba(229,67,26,.28); display:flex; align-items:center; gap:10px;
+  transition:padding var(--dur-base) var(--ease-out);
+  overflow:hidden;
+}
+header.shrunk .noren-in{ padding-top:8px; padding-bottom:10px; }
+.steam{ position:absolute; top:-8px; width:10px; height:34px; border-radius:50%; background:rgba(255,255,255,.5);
+  filter:blur(7px); opacity:0; animation:steam 4.6s ease-in-out infinite; pointer-events:none; }
+.steam.s1{ left:24%; animation-delay:.2s;} .steam.s2{ left:50%; animation-delay:1.6s; height:42px;} .steam.s3{ left:74%; animation-delay:3s;}
+@keyframes steam{ 0%{opacity:0; transform:translateY(6px) scaleX(1);} 30%{opacity:.55;} 100%{opacity:0; transform:translateY(-30px) scaleX(1.7);} }
+.logo{ font-size:25px; font-weight:800; letter-spacing:.4px; line-height:1; position:relative; }
+.logo .dot{ position:relative; }
+.logo .dot::after{ content:""; position:absolute; top:-2px; left:50%; transform:translateX(-50%); width:7px; height:7px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 2px rgba(255,255,255,.5);}
+.logo-sub{ font-size:10.5px; opacity:.96; margin-top:5px; font-weight:600; letter-spacing:.3px;}
+.h-right{ margin-left:auto; display:flex; align-items:center; gap:8px;}
+.icon-btn{ width:40px; height:40px; border:none; border-radius:50%; background:rgba(255,255,255,.22); color:#fff; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(3px);}
+.pts-pill{ display:flex; align-items:center; gap:6px; background:rgba(255,255,255,.92); color:var(--secondary); border-radius:var(--r-pill); padding:7px 13px 7px 11px; box-shadow:var(--sh-1); }
+.pts-pill .c{ font-size:15px;}
+.pts-pill b{ font-size:16px; line-height:1;}
+.pts-pill small{ font-size:9px; color:var(--sub); display:block; margin-top:1px;}
+
+/* =================== 共通：見出し =================== */
+main{ padding:18px 14px 0; position:relative; }
+section{ display:none; }
+section.active{ display:block; animation:viewIn var(--dur-base) var(--ease-out); }
+@keyframes viewIn{ from{opacity:0; transform:translateY(14px) scale(.985);} to{opacity:1; transform:none;} }
+h2.title{ font-size:var(--fs-h2); font-weight:800; letter-spacing:var(--ls-head); margin:2px 2px 6px; display:flex; align-items:center; gap:9px; }
+h2.title .te{ font-size:24px; }
+p.lead{ color:var(--sub); font-size:var(--fs-sub); margin:0 2px 18px; line-height:var(--lh-body); }
+
+/* =================== ホーム =================== */
+.hero{ text-align:center; padding:8px 6px 4px; }
+.hero h1{ font-size:var(--fs-h1); line-height:var(--lh-head); letter-spacing:var(--ls-head); margin:2px 0 8px; font-weight:800;}
+.hero .logo-big{ font-size:40px; font-weight:800; letter-spacing:1px; }
+.hero .copy{ font-size:14px; color:var(--ink); font-weight:700; margin:0 0 4px; }
+.hero .greet{ font-size:12px; color:var(--sub); }
+
+.scoreboard{ display:flex; gap:9px; overflow-x:auto; padding:16px 2px 6px; margin:0 -2px; scrollbar-width:none; }
+.scoreboard::-webkit-scrollbar{ display:none; }
+.medal{ flex:0 0 auto; min-width:84px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md);
+  padding:11px 12px; box-shadow:var(--sh-1); text-align:center; position:relative; }
+.medal .mv{ font-size:23px; color:var(--secondary); line-height:1; }
+.medal .ml{ font-size:10px; color:var(--sub); margin-top:5px; }
+.medal .floatp{ position:absolute; top:2px; right:8px; font-size:13px; font-weight:800; color:var(--success); opacity:0; }
+.medal.flash .mv{ animation:flashv .5s ease; }
+@keyframes flashv{ 0%{color:var(--accent-deep); transform:scale(1.18);} 100%{color:var(--secondary); transform:none;} }
+
+.modes{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:14px 0 14px; }
+.mode{ position:relative; border:none; cursor:pointer; text-align:left; border-radius:var(--r-lg); padding:16px 14px 15px;
+  background:var(--surface); box-shadow:var(--sh-2), var(--sh-inset); overflow:hidden; min-height:128px;
+  opacity:0; transform:perspective(600px) rotateX(-12deg) translateY(20px); animation:peelin .5s var(--ease-out) forwards; animation-delay:var(--d,0ms);}
+@keyframes peelin{ to{opacity:1; transform:none;} }
+.mode::before{ content:""; position:absolute; inset:0 0 auto 0; height:64%; opacity:.16; }
+.mode.m-strict::before{ background:var(--grad-primary);}
+.mode.m-roulette::before{ background:var(--grad-gold);}
+.mode.m-quiz::before{ background:var(--grad-quiz);}
+.mode.m-cafe::before{ background:var(--grad-cafe);}
+.mode .me-emoji{ font-size:34px; display:block; line-height:1; filter:drop-shadow(0 6px 10px rgba(255,106,43,.35)); position:relative;}
+.mode .mname{ font-size:var(--fs-card); font-weight:800; display:block; margin-top:10px; letter-spacing:var(--ls-head); }
+.mode .mdesc{ font-size:11px; color:var(--sub); display:block; margin-top:4px; line-height:1.45; font-weight:600;}
+.mode:active{ box-shadow:var(--sh-press); }
+
+.cta-row{ margin:2px 0 6px; }
+.btn-discover{ width:100%; border:none; cursor:pointer; border-radius:var(--r-lg); padding:16px; color:var(--on-primary); font-weight:800; font-size:15px;
+  background:var(--grad-primary); box-shadow:var(--sh-fab); display:flex; align-items:center; justify-content:center; gap:8px; }
+
+.note{ font-size:10.5px; color:var(--sub); text-align:center; margin:20px 8px 6px; line-height:1.7; }
+
+/* =================== 下部ナビ + FAB =================== */
+nav.dock{ position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:var(--app-max); z-index:var(--z-nav);
+  display:flex; align-items:flex-end; padding:8px 8px calc(10px + env(safe-area-inset-bottom));
+  background:rgba(255,253,249,.82); -webkit-backdrop-filter:blur(18px) saturate(160%); backdrop-filter:blur(18px) saturate(160%);
+  border-top:1px solid var(--line); transition:transform var(--dur-base) var(--ease-out);}
+@media (prefers-color-scheme: dark){ nav.dock{ background:rgba(36,23,16,.82);} }
+nav.dock button.navb{ flex:1; border:none; background:none; cursor:pointer; color:var(--sub); font-size:10px; font-weight:700;
+  display:flex; flex-direction:column; align-items:center; gap:3px; padding:5px 0 2px; position:relative; }
+nav.dock .ni{ font-size:21px; line-height:1; filter:grayscale(.85); opacity:.6; transition:transform var(--dur-base) var(--ease-overshoot), filter var(--dur-base), opacity var(--dur-base);}
+nav.dock button.navb.on{ color:var(--secondary);}
+nav.dock button.navb.on .ni{ filter:none; opacity:1; transform:translateY(-3px) scale(1.06);}
+nav.dock button.navb.on::after{ content:""; position:absolute; bottom:-1px; width:6px; height:6px; border-radius:50%; background:var(--accent); box-shadow:0 0 8px var(--accent-deep);}
+.fab-wrap{ flex:0 0 64px; display:flex; justify-content:center; align-items:flex-start; }
+.fab{ width:60px; height:60px; margin-top:-22px; border:none; border-radius:50%; cursor:pointer; color:#fff; font-size:13px; font-weight:800;
+  background:var(--grad-primary); box-shadow:var(--sh-fab); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; position:relative;}
+.fab::before{ content:""; position:absolute; inset:-5px; border-radius:50%; background:var(--grad-glow); opacity:.0; animation:fabglow 2.4s ease-in-out infinite; z-index:-1;}
+.fab .fi{ font-size:20px; line-height:1;}
+.fab .fl{ font-size:8.5px;}
+@keyframes fabglow{ 0%,100%{opacity:.25; transform:scale(.92);} 50%{opacity:.7; transform:scale(1.08);} }
+
+/* =================== 店舗カード =================== */
+.resto{ position:relative; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); padding:14px 14px 14px 20px;
+  margin-bottom:12px; box-shadow:var(--sh-2), var(--sh-inset); overflow:hidden;
+  opacity:0; transform:translateY(14px); animation:plate .5s var(--ease-out) forwards; animation-delay:var(--d,0ms);}
+@keyframes plate{ to{opacity:1; transform:none;} }
+.resto .rarity{ position:absolute; left:0; top:0; bottom:0; width:5px; }
+.resto.r-legend .rarity{ background:var(--rare-legend);} .resto.r-mid .rarity{ background:var(--rare-mid);} .resto.r-common .rarity{ background:var(--rare-common);}
+.rtop{ display:flex; align-items:flex-start; gap:11px;}
+.resto .emoji{ font-size:38px; flex:0 0 auto; line-height:1; filter:drop-shadow(0 5px 8px rgba(255,106,43,.3));}
+.resto h3{ margin:0; font-size:var(--fs-card); font-weight:800; letter-spacing:var(--ls-head);}
+.resto .meta{ font-size:11.5px; color:var(--sub); margin-top:3px; line-height:1.5;}
+.badges{ margin-top:7px; display:flex; flex-wrap:wrap; gap:5px;}
+.badge{ font-size:10.5px; font-weight:800; padding:3px 9px; border-radius:var(--r-pill); border:1px solid transparent; }
+.b-niche-legend{ background:rgba(255,194,60,.16); color:#9a6b00; border-color:rgba(255,194,60,.5);}
+.b-niche-mid{ background:rgba(255,106,43,.12); color:#b8430f; border-color:rgba(255,106,43,.4);}
+.b-niche-common{ background:rgba(192,52,28,.1); color:#9c2a16; border-color:rgba(192,52,28,.35);}
+.b-mood{ background:var(--surface-sub); color:var(--sub); }
+.b-yum{ background:rgba(46,158,107,.12); color:#1c7e56;}
+.b-new{ background:var(--grad-primary); color:#fff;}
+.score-chip{ margin-left:auto; flex:0 0 auto; text-align:center; background:var(--surface-sub); border-radius:var(--r-md); padding:6px 9px; min-width:52px;}
+.score-chip b{ font-size:21px; color:var(--secondary); line-height:1; display:block;}
+.score-chip small{ font-size:8.5px; color:var(--sub);}
+.point{ font-size:13px; line-height:var(--lh-body); margin:11px 0 0; background:var(--surface-sub); border-radius:0 var(--r-sm) var(--r-sm) 0; border-left:3px solid var(--accent-deep); padding:9px 12px;}
+.links{ display:flex; gap:8px; margin-top:11px;}
+.links a{ flex:1; text-align:center; text-decoration:none; font-size:12.5px; font-weight:800; padding:11px; border-radius:var(--r-sm); position:relative; overflow:hidden;}
+.l-hp{ background:#E60044; color:#fff;}
+.l-tb{ background:var(--surface); color:#E07A1A; border:1.5px solid #FFCF9E;}
+.favbtn{ flex:0 0 46px; border:1.5px solid var(--line); background:var(--surface); border-radius:var(--r-sm); font-size:17px; cursor:pointer; line-height:1; transition:transform var(--dur-base) var(--ease-overshoot), border-color var(--dur-base);}
+.favbtn.on{ border-color:var(--danger); }
+.favbtn.on{ transform:scale(1.04); }
+
+/* =================== チップ & ボタン =================== */
+.btn{ display:flex; align-items:center; justify-content:center; gap:8px; width:100%; border:none; border-radius:var(--r-md); padding:15px; font-size:15px; font-weight:800;
+  color:var(--on-primary); background:var(--grad-primary); cursor:pointer; box-shadow:var(--sh-fab); margin-top:4px;}
+.btn.ghost{ background:var(--surface); color:var(--secondary); border:1.5px solid var(--primary); box-shadow:none;}
+.btn.sm{ padding:12px; font-size:13.5px;}
+.btn:disabled{ opacity:.5; }
+.qlabel{ font-size:13.5px; font-weight:800; margin:2px 2px 10px; letter-spacing:var(--ls-head);}
+.chips{ display:flex; flex-wrap:wrap; gap:8px;}
+.chip{ position:relative; border:1.5px solid var(--line); background:var(--surface); border-radius:var(--r-pill); padding:9px 14px; font-size:13px; font-weight:700;
+  color:var(--ink); cursor:pointer; user-select:none; overflow:hidden; isolation:isolate;}
+.chip::before{ content:""; position:absolute; inset:0; z-index:-1; background:var(--grad-primary); transform:scaleX(0); transform-origin:left; transition:transform var(--dur-base) var(--ease-out);}
+.chip.sel{ color:var(--on-primary); border-color:transparent; font-weight:800;}
+.chip.sel::before{ transform:scaleX(1);}
+.chip.sel::after{ content:"✓"; margin-left:6px; font-weight:900;}
+
+.card{ background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); box-shadow:var(--sh-2), var(--sh-inset); padding:16px; margin-bottom:14px;}
+
+/* =================== 厳選チャット =================== */
+#strict .simmer{ display:flex; gap:5px; justify-content:center; margin:0 0 14px; font-size:18px; }
+#strict .simmer .ing{ opacity:.25; filter:grayscale(1); transition:all var(--dur-base) var(--ease-overshoot);}
+#strict .simmer .ing.lit{ opacity:1; filter:none; transform:translateY(-2px) scale(1.1);}
+#chatLog{ display:flex; flex-direction:column; gap:10px; margin-bottom:10px;
+  background:repeating-linear-gradient(0deg, transparent 0 23px, rgba(234,219,200,.25) 23px 24px); padding:6px 2px; border-radius:var(--r-md);}
+.bubble{ max-width:84%; padding:11px 14px; font-size:13.5px; line-height:var(--lh-body); animation:pop .3s var(--ease-out);}
+@keyframes pop{ from{opacity:0; transform:translateY(8px) scale(.96);} to{opacity:1; transform:none;} }
+.bot{ align-self:flex-start; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-bubble); box-shadow:var(--sh-1);}
+.bot .who{ font-size:11px; color:var(--secondary); font-weight:800; margin-bottom:3px; display:flex; align-items:center; gap:6px;}
+.bot .who .av{ display:inline-flex; width:20px; height:20px; border-radius:50%; align-items:center; justify-content:center; background:var(--accent); box-shadow:0 0 10px rgba(255,178,46,.7); font-size:12px;}
+.me{ align-self:flex-end; background:var(--grad-primary); color:var(--on-primary); border-radius:22px 22px 6px 22px; font-weight:700;}
+.typing{ display:inline-flex; gap:4px; padding:2px 0;}
+.typing i{ width:7px; height:7px; border-radius:50%; background:var(--sub); animation:typ 1s infinite;}
+.typing i:nth-child(2){ animation-delay:.15s;} .typing i:nth-child(3){ animation-delay:.3s;}
+@keyframes typ{ 0%,60%,100%{ transform:translateY(0); opacity:.4;} 30%{ transform:translateY(-5px); opacity:1;} }
+#chatChoices .chip{ animation:slidein .35s var(--ease-out) both;}
+@keyframes slidein{ from{opacity:0; transform:translateX(-12px);} to{opacity:1; transform:none;} }
+
+/* =================== ルーレット =================== */
+.wheelwrap{ position:relative; width:280px; height:280px; margin:6px auto 16px;}
+.pointer{ position:absolute; top:-4px; left:50%; transform:translateX(-50%); z-index:5; font-size:30px; filter:drop-shadow(0 3px 3px rgba(0,0,0,.25));}
+#wheel{ width:100%; height:100%; border-radius:50%; border:8px solid var(--surface);
+  box-shadow:0 12px 34px rgba(120,60,25,.28), inset 0 0 0 4px rgba(255,210,90,.6), var(--sh-glow-gold); will-change:transform;}
+.hub{ position:absolute; top:50%; left:50%; width:64px; height:64px; margin:-32px 0 0 -32px; border-radius:50%;
+  background:var(--surface); box-shadow:0 5px 14px rgba(0,0,0,.25); display:flex; align-items:center; justify-content:center; font-size:26px; z-index:4;}
+.scope{ display:flex; gap:8px; margin:0 0 14px; }
+.scope .chip{ flex:1; text-align:center; justify-content:center; display:flex; align-items:center; white-space:nowrap; font-size:12.5px; padding:11px 8px;}
+.scope .chip.sel::after{ content:none; }
+.spin-cta{ position:relative; width:100%; border:none; border-radius:var(--r-lg); padding:17px; color:#fff; font-weight:800; font-size:16px; cursor:pointer;
+  background:var(--grad-primary); box-shadow:var(--sh-fab); overflow:hidden;}
+.spin-cta::after{ content:""; position:absolute; inset:0; background:var(--grad-glow); opacity:.0; animation:fabglow 2.2s ease-in-out infinite;}
+.spin-cta:disabled{ opacity:.65;}
+.win-banner{ text-align:center; font-size:13px; font-weight:800; color:var(--secondary); margin:2px 0 10px; }
+.win-name{ font-size:24px; font-weight:800; text-align:center; margin:4px 0 12px; letter-spacing:var(--ls-head); animation:riseup .5s var(--ease-overshoot);}
+@keyframes riseup{ from{opacity:0; transform:translateY(18px) scale(.9);} to{opacity:1; transform:none;} }
+
+/* =================== 店舗登録 =================== */
+.field{ margin-bottom:14px;}
+.field label{ font-size:13px; font-weight:800; display:block; margin-bottom:7px;}
+.field input,.field textarea,.field select{ width:100%; border:1.5px solid var(--line); border-radius:var(--r-sm); padding:12px; font-size:14px; font-family:inherit; background:var(--surface); color:var(--ink);}
+.field textarea{ resize:vertical; min-height:62px;}
+.field input:focus,.field textarea:focus,.field select:focus{ outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(255,106,43,.14);}
+.checkrow{ font-size:13px; display:flex; align-items:center; gap:9px; margin-bottom:14px; font-weight:700;}
+.checkrow input{ width:auto; transform:scale(1.2);}
+
+/* =================== クイズ =================== */
+.titlebar{ display:flex; align-items:center; gap:11px; background:var(--grad-quiz); color:#fff; border-radius:var(--r-lg); padding:14px 16px; margin-bottom:14px; box-shadow:var(--sh-2);}
+.titlebar .crown{ font-size:28px;}
+.titlebar b{ font-size:16px; font-weight:800;}
+.titlebar small{ display:block; font-size:11px; opacity:.92; margin-top:2px;}
+.combo{ margin-left:auto; text-align:center; background:rgba(0,0,0,.16); border-radius:var(--r-md); padding:6px 11px;}
+.combo .cv{ font-size:20px; line-height:1;}
+.combo .cl{ font-size:8.5px; opacity:.9;}
+.qcard{ text-align:center;}
+.qnum{ font-size:11px; color:var(--secondary); font-weight:800; letter-spacing:1px;}
+.qtext{ font-size:17px; font-weight:800; margin:10px 4px 18px; line-height:1.55; letter-spacing:var(--ls-head);}
+.qopts{ display:flex; flex-direction:column; gap:10px;}
+.qopt{ border:1.5px solid var(--line); background:var(--surface); border-radius:var(--r-md); padding:14px; font-size:14px; cursor:pointer; text-align:left; font-weight:700; color:var(--ink); position:relative; padding-left:42px;}
+.qopt::before{ content:attr(data-k); position:absolute; left:12px; top:50%; transform:translateY(-50%); width:22px; height:22px; border-radius:50%; background:var(--surface-sub); color:var(--sub); font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center;}
+.qopt.correct{ background:rgba(46,158,107,.12); border-color:var(--success); color:#147a54; box-shadow:0 0 0 3px rgba(46,158,107,.18);}
+.qopt.correct::before{ content:"✓"; background:var(--success); color:#fff;}
+.qopt.wrong{ background:rgba(214,69,65,.1); border-color:var(--danger); color:#b3322e; animation:shake .4s;}
+.qopt.wrong::before{ content:"✕"; background:var(--danger); color:#fff;}
+@keyframes shake{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
+.qopt:disabled{ cursor:default;}
+.explain{ margin-top:16px; text-align:left; background:var(--surface-sub); border-radius:var(--r-md); padding:14px; font-size:13px; line-height:var(--lh-body); animation:pop .3s var(--ease-out);}
+.explain .lead-next{ margin-top:10px; font-weight:800; color:var(--secondary);}
+
+/* =================== 喫茶 =================== */
+#cafe{ }
+.cafe-hd{ background:var(--grad-cafe); color:#F4E6D2; border-radius:var(--r-lg); padding:14px 16px; margin-bottom:14px; box-shadow:var(--sh-2); position:relative; overflow:hidden;}
+.cafe-hd .cs{ position:absolute; top:-6px; right:30px; width:8px; height:28px; border-radius:50%; background:rgba(255,255,255,.35); filter:blur(6px); animation:steam 5s ease-in-out infinite;}
+.cafe-hd h3{ margin:0; font-size:16px; font-weight:800;}
+.cafe-hd p{ margin:5px 0 0; font-size:11.5px; opacity:.85; line-height:1.6;}
+.resto.cafe-card{ background:var(--cafe-bg);}
+.seg{ display:flex; gap:7px; flex-wrap:wrap; margin-bottom:14px;}
+
+/* =================== トースト / 演出オーバーレイ =================== */
+#toast{ position:fixed; left:50%; bottom:calc(98px + env(safe-area-inset-bottom)); transform:translateX(-50%) translateY(16px) rotate(-2deg); z-index:var(--z-overlay);
+  background:var(--ink); color:#fff; padding:12px 18px; border-radius:14px 14px 14px 4px; font-size:13px; font-weight:800; box-shadow:var(--sh-3);
+  opacity:0; pointer-events:none; transition:all var(--dur-base) var(--ease-overshoot); max-width:88%; text-align:center; display:flex; align-items:center; gap:8px;}
+#toast.show{ opacity:1; transform:translateX(-50%) translateY(0) rotate(-2deg);}
+#toast.gold{ border:2px solid var(--accent); }
+
+#fxCanvas{ position:fixed; inset:0; z-index:var(--z-modal); pointer-events:none; display:none;}
+#wipe{ position:fixed; inset:0; z-index:var(--z-overlay); background:var(--grad-primary); clip-path:circle(0% at var(--wx,50%) var(--wy,0%)); pointer-events:none;}
+#flyer{ position:fixed; z-index:calc(var(--z-overlay) + 1); font-size:34px; pointer-events:none; display:none; will-change:transform; filter:drop-shadow(0 6px 10px rgba(255,106,43,.4));}
+
+#modalLayer{ position:fixed; inset:0; z-index:var(--z-modal); display:none; align-items:center; justify-content:center; padding:20px;
+  background:rgba(42,20,16,.42); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px);}
+#modalLayer.show{ display:flex;}
+.praise{ background:var(--surface); border-radius:var(--r-xl); padding:26px 24px 22px; box-shadow:var(--sh-3); text-align:center; max-width:320px; width:100%;
+  transform:scale(.6); opacity:0; transition:transform 380ms var(--ease-overshoot), opacity 200ms;}
+#modalLayer.show .praise{ transform:scale(1); opacity:1;}
+.praise .big{ font-size:50px; line-height:1;}
+.praise h3{ margin:8px 0 4px; font-size:21px; font-weight:800;}
+.praise p{ margin:0 0 8px; font-size:13px; color:var(--sub); line-height:var(--lh-body);}
+.praise .gain{ font-size:26px; font-weight:800; color:var(--success); margin:6px 0; white-space:nowrap;}
+/* 開拓者カード（conic shine） */
+.pioneer{ position:relative; border-radius:var(--r-md); padding:2px; margin:12px 0 6px; background:conic-gradient(from var(--ang), #FFD25A, #FF6A2B, #C0341C, #FFD25A); animation:shine 3.2s linear infinite;}
+@keyframes shine{ to{ --ang:360deg; } }
+.pioneer .inner{ background:var(--surface); border-radius:14px; padding:13px 14px; text-align:left;}
+.pioneer .pt{ font-size:10px; color:var(--sub); font-weight:800; letter-spacing:1px;}
+.pioneer .pn{ font-size:16px; font-weight:800; margin:3px 0 2px;}
+.pioneer .pd{ font-size:11px; color:var(--sub);}
+.praise .modal-actions{ display:flex; gap:9px; margin-top:12px;}
+.praise .modal-actions .btn{ margin-top:0;}
+
+/* =================== スプラッシュ =================== */
+#splash{ position:fixed; inset:0; z-index:200; background:var(--grad-primary); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; color:#fff;
+  transition:opacity .5s ease, visibility .5s;}
+#splash.gone{ opacity:0; visibility:hidden; pointer-events:none;}
+#splash .sp-logo{ font-size:46px; font-weight:800; letter-spacing:1px; animation:sppop .7s var(--ease-overshoot);}
+#splash .sp-sub{ font-size:13px; opacity:.95; font-weight:700; animation:viewIn .8s var(--ease-out) .2s both;}
+#splash .sp-steam{ position:absolute; top:38%; width:12px; height:40px; border-radius:50%; background:rgba(255,255,255,.5); filter:blur(8px); animation:steam 3.5s ease-in-out infinite;}
+@keyframes sppop{ from{opacity:0; transform:scale(.6) translateY(10px);} to{opacity:1; transform:none;} }
+
+.empty{ text-align:center; color:var(--sub); font-size:13px; padding:30px 10px; line-height:1.7;}
+
+/* =================== reduced motion =================== */
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:90ms !important;}
+  .steam,.cafe-hd .cs,#splash .sp-steam,.fab::before,.spin-cta::after{ animation:none !important; opacity:.4;}
+  section.active{ animation:fade .18s ease;}
+  @keyframes fade{ from{opacity:0;} to{opacity:1;} }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== ヘッダー（暖簾） ===== -->
+  <header class="noren" id="noren">
+    <div class="noren-in">
+      <span class="steam s1"></span><span class="steam s2"></span><span class="steam s3"></span>
+      <div>
+        <div class="logo">COCO<span class="dot">i</span>CO</div>
+        <div class="logo-sub">🍜 大学前のうまい店、見つけにいこ。</div>
+      </div>
+      <div class="h-right">
+        <button class="icon-btn tap" id="muteBtn" title="効果音" onclick="toggleMute()">🔊</button>
+        <div class="pts-pill"><span class="c">🪙</span><div><b class="num" id="ptDisplay">0</b><small>ココポイント</small></div></div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ========== HOME ========== -->
+    <section id="home" class="active">
+      <div class="hero">
+        <div class="logo-big grad-text">COCOiCO</div>
+        <p class="copy">もう「何でもいい」とは、言わせない。</p>
+        <p class="greet" id="greet">はじめまして！今日の一軒、見つけにいこう。</p>
+      </div>
+
+      <div class="scoreboard" id="scoreboard">
+        <div class="medal" id="md-pt"><div class="mv num" id="sbPt">0</div><div class="ml">ココポイント</div><div class="floatp"></div></div>
+        <div class="medal" id="md-reg"><div class="mv num" id="sbReg">0</div><div class="ml">登録した店</div><div class="floatp"></div></div>
+        <div class="medal" id="md-quiz"><div class="mv num" id="sbQuiz">0</div><div class="ml">クイズ正解</div><div class="floatp"></div></div>
+        <div class="medal" id="md-rank"><div class="mv" id="sbRank" style="font-size:14px;padding:5px 0;">ー</div><div class="ml">称号</div></div>
+      </div>
+
+      <div class="modes" id="modeGrid">
+        <button class="mode m-strict tap" style="--d:0ms"   onclick="go('strict', this)">
+          <span class="me-emoji">🔥</span><span class="mname grad-text">厳選モード</span><span class="mdesc">デート・打ち上げ。<br>外せない時はAIと相談</span>
+        </button>
+        <button class="mode m-roulette tap" style="--d:70ms" onclick="go('roulette', this)">
+          <span class="me-emoji">🎯</span><span class="mname grad-text">探索モード</span><span class="mdesc">未知の名店を開拓！<br>ルーレットでお告げ</span>
+        </button>
+        <button class="mode m-quiz tap" style="--d:140ms" onclick="go('quiz', this)">
+          <span class="me-emoji">🧠</span><span class="mname grad-text">ご飯屋クイズ</span><span class="mdesc">解いて〇〇マスターに<br>新しい店とも出会える</span>
+        </button>
+        <button class="mode m-cafe tap" style="--d:210ms" onclick="go('cafe', this)">
+          <span class="me-emoji">☕</span><span class="mname grad-text">隠れ家喫茶店</span><span class="mdesc">地図に載らない名店<br>読書・長居OKを厳選</span>
+        </button>
+      </div>
+
+      <div class="cta-row">
+        <button class="btn-discover tap" onclick="go('register', this)"><span class="me-emoji" style="font-size:22px;filter:none;">✨</span> 知らない店を登録して、褒められる</button>
+      </div>
+
+      <p class="note">※ 掲載店舗は食べログの掲載項目を模したサンプルデータです（店名はサンプル名）。各店から食べログ／ホットペッパー検索へ遷移できます。</p>
+    </section>
+
+    <!-- ========== STRICT ========== -->
+    <section id="strict">
+      <h2 class="title"><span class="te" id="te-strict">🔥</span>厳選モード</h2>
+      <p class="lead">外したくない店選びを、AIココ助が対話で厳密に絞り込みます。タップで答えてね。</p>
+      <div class="simmer" id="simmer"></div>
+      <div id="chatLog"></div>
+      <div id="chatChoices"></div>
+      <div id="chatResult"></div>
+    </section>
+
+    <!-- ========== ROULETTE ========== -->
+    <section id="roulette">
+      <h2 class="title"><span class="te" id="te-roulette">🎯</span>探索モード</h2>
+      <p class="lead">「ちょっと知らない店、開拓しよ」な気分に。鉄板ターンテーブルを回して、未知の名店に出会おう。</p>
+      <div class="card">
+        <div class="qlabel">どんな冒険にする？</div>
+        <div class="scope" id="rouletteScope">
+          <div class="chip sel tap" data-r="all">🎆 全部</div>
+          <div class="chip tap" data-r="中堅">🏮 中堅</div>
+          <div class="chip tap" data-r="秘境">🌿 秘境</div>
+        </div>
+        <div class="wheelwrap">
+          <div class="pointer">🔻</div>
+          <canvas id="wheel" width="300" height="300"></canvas>
+          <div class="hub">🍽️</div>
+        </div>
+        <button class="spin-cta tap" id="spinBtn" onclick="spin()">🎲 ルーレットを回す！</button>
+      </div>
+      <div id="rouletteResult"></div>
+    </section>
+
+    <!-- ========== REGISTER ========== -->
+    <section id="register">
+      <h2 class="title"><span class="te" id="te-register">✨</span>オススメの店を登録</h2>
+      <p class="lead">あなたの「実際に行ってよかった店」を登録しよう。誰もまだ知らない店なら…サプライズがあるかも？</p>
+      <div class="card">
+        <div class="field"><label>店名 <span style="color:var(--secondary)">*</span></label>
+          <input id="regName" type="text" placeholder="例）まかない食堂 こめ太郎" maxlength="40"></div>
+        <div class="field"><label>ジャンル / 気分</label><div class="chips" id="regMood"></div></div>
+        <div class="field"><label>大学からの距離（徒歩）</label>
+          <select id="regDist">
+            <option value="2">徒歩2分（目の前）</option><option value="5" selected>徒歩5分</option>
+            <option value="8">徒歩8分</option><option value="12">徒歩12分</option><option value="18">徒歩18分（ちょい遠征）</option>
+          </select></div>
+        <div class="field"><label>予算の目安</label><div class="chips" id="regPrice"></div></div>
+        <div class="field"><label>ニッチ度（知名度）</label><div class="chips" id="regNiche"></div></div>
+        <div class="field"><label>おすすめポイント <span style="color:var(--secondary)">*</span></label>
+          <textarea id="regPoint" placeholder="例）夜だけ出る裏メニューの油そばが神。学割で大盛り無料！" maxlength="120"></textarea></div>
+        <label class="checkrow"><input id="regCafe" type="checkbox"> 隠れ家喫茶店として登録する</label>
+        <button class="btn tap" onclick="submitRegister()">🚀 この店を登録する</button>
+      </div>
+    </section>
+
+    <!-- ========== QUIZ ========== -->
+    <section id="quiz">
+      <h2 class="title"><span class="te" id="te-quiz">🧠</span>町のご飯屋クイズ</h2>
+      <div class="titlebar">
+        <span class="crown">👑</span>
+        <div><b id="quizTitle">グルメ見習い</b><small><span class="num" id="quizCorrect">0</span>問正解 / 称号まであと<span class="num" id="quizNext">3</span>問</small></div>
+        <div class="combo"><div class="cv num score-skew" id="comboV">0</div><div class="cl">🔥COMBO</div></div>
+      </div>
+      <div class="card qcard" id="quizCard"></div>
+    </section>
+
+    <!-- ========== CAFE ========== -->
+    <section id="cafe">
+      <h2 class="title"><span class="te" id="te-cafe">☕</span>隠れ家喫茶店リスト</h2>
+      <div class="cafe-hd"><span class="cs"></span>
+        <h3>地図に載らない、知る人ぞ知る空間。</h3>
+        <p>静かに本と向き合いたい大学生のための専用ページ。タグで“今の気分”に合う一席を。</p>
+      </div>
+      <div class="qlabel" style="margin-left:2px;">タグでしぼり込む（複数OK）</div>
+      <div class="seg" id="cafeTags"></div>
+      <div id="cafeList"></div>
+    </section>
+  </main>
+
+  <!-- ===== 下部ナビ ===== -->
+  <nav class="dock">
+    <button class="navb on tap" data-nav="home" onclick="go('home')"><span class="ni">🏠</span>ホーム</button>
+    <button class="navb tap" data-nav="strict" onclick="go('strict')"><span class="ni">🔥</span>厳選</button>
+    <div class="fab-wrap"><button class="fab tap" onclick="go('register', this)"><span class="fi">＋</span><span class="fl">登録</span></button></div>
+    <button class="navb tap" data-nav="roulette" onclick="go('roulette')"><span class="ni">🎯</span>探索</button>
+    <button class="navb tap" data-nav="cafe" onclick="go('cafe')"><span class="ni">☕</span>喫茶</button>
+  </nav>
+</div>
+
+<!-- ===== オーバーレイ群 ===== -->
+<div id="toast"></div>
+<canvas id="fxCanvas"></canvas>
+<div id="wipe"></div>
+<div id="flyer"></div>
+<div id="modalLayer"><div class="praise" id="praiseBox"></div></div>
+<div id="splash">
+  <span class="sp-steam" style="left:42%"></span><span class="sp-steam" style="left:54%;animation-delay:1.4s"></span>
+  <div class="sp-logo">COCOiCO</div>
+  <div class="sp-sub">今日どこ行く？を、ごちそうに。</div>
+</div>
+
+<script>
+/* =========================================================
+   COCOiCO — データ層（機能ロジックは見た目から分離）
+   ========================================================= */
+const OPT = {
+  people:["1人","2人","3〜4人","5人以上"],
+  companion:["ひとりで","気の置けない友人","気の置ける友人","恋人","好きな人","先輩","後輩","ゼミ・サークルの団体"],
+  time:["モーニング","ランチ","カフェタイム","ディナー","深夜","終電逃し後"],
+  price:["1000円未満","1000〜2000円","2000〜3000円","3000〜5000円","5000円以上"],
+  reserve:["予約必須","予約可能","予約してもしなくてもいい","予約不可"],
+  smoke:["完全禁煙","分煙","禁煙より","喫煙より","喫煙可"],
+  mood:["和食","洋食","中華","アジア系","その他海外料理","がっつり・こってり","あっさり・ヘルシー","軽食・甘いもの"],
+  niche:["定番","中堅","秘境"],
+  yum:["圧倒的美味","コスパ重視","中毒性あり"],
+  owner:["フレンドリー","適度な距離感","完全無干渉"],
+  atmos:["ワイワイ・ガヤガヤ","おしゃれ・洗練","静か・落ち着き","ディープ・レトロ"],
+  break:["昼休み","空きコマ","放課後・全休"]
+};
+const SEED = [
+  {emoji:"🍜",name:"まかない食堂 こめ太郎",mood:["和食","がっつり・こってり"],dist:3,price:"1000円未満",reserve:"予約不可",smoke:"完全禁煙",niche:"定番",yum:["コスパ重視","中毒性あり"],owner:"フレンドリー",atmos:["ワイワイ・ガヤガヤ"],people:["1人","2人","3〜4人"],companion:["ひとりで","気の置けない友人","後輩"],time:["ランチ","ディナー"],brk:["昼休み","空きコマ"],point:"学割で大盛り無料。チキン南蛮定食が500円台という大学生の聖地。とにかく腹を満たしたい日に。"},
+  {emoji:"🍝",name:"トラットリア・ボーノ",mood:["洋食","西洋系"],dist:7,price:"2000〜3000円",reserve:"予約可能",smoke:"完全禁煙",niche:"中堅",yum:["圧倒的美味"],owner:"適度な距離感",atmos:["おしゃれ・洗練"],people:["2人"],companion:["恋人","好きな人"],time:["ディナー"],brk:["放課後・全休"],point:"間接照明の効いた隠れ家イタリアン。デートで失敗したくない夜に。自家製生パスタが評判。"},
+  {emoji:"🥟",name:"町中華 龍王軒",mood:["中華","がっつり・こってり"],dist:5,price:"1000〜2000円",reserve:"予約不可",smoke:"分煙",niche:"定番",yum:["コスパ重視","中毒性あり"],owner:"フレンドリー",atmos:["ディープ・レトロ"],people:["1人","2人","3〜4人"],companion:["気の置けない友人","先輩"],time:["ランチ","ディナー","深夜"],brk:["昼休み","放課後・全休"],point:"昭和から続く町中華。半チャンラーメンの破壊力。深夜まで開いてて飲んだ後の〆にも最強。"},
+  {emoji:"🍢",name:"おでん横丁 だしの",mood:["和食","あっさり・ヘルシー"],dist:9,price:"2000〜3000円",reserve:"予約可能",smoke:"喫煙より",niche:"秘境",yum:["圧倒的美味"],owner:"フレンドリー",atmos:["ディープ・レトロ"],people:["2人","3〜4人"],companion:["先輩","気の置ける友人"],time:["ディナー","深夜"],brk:["放課後・全休"],point:"路地裏の知る人ぞ知るおでん屋。大将の人柄に常連が集う。先輩に連れてってもらった感を演出できる。"},
+  {emoji:"🍛",name:"スパイス研究室 マサラ",mood:["アジア系","あっさり・ヘルシー"],dist:6,price:"1000〜2000円",reserve:"予約してもしなくてもいい",smoke:"完全禁煙",niche:"中堅",yum:["中毒性あり"],owner:"適度な距離感",atmos:["おしゃれ・洗練"],people:["1人","2人"],companion:["ひとりで","気の置けない友人"],time:["ランチ","ディナー"],brk:["昼休み","空きコマ"],point:"週替わりの本格スパイスカレー。ひとりランチでも居心地◎。汗かいて午後の授業をリセット。"},
+  {emoji:"🍖",name:"七輪焼肉 もくもく亭",mood:["和食","がっつり・こってり"],dist:11,price:"3000〜5000円",reserve:"予約必須",smoke:"分煙",niche:"中堅",yum:["圧倒的美味"],owner:"フレンドリー",atmos:["ワイワイ・ガヤガヤ"],people:["3〜4人","5人以上"],companion:["ゼミ・サークルの団体","気の置けない友人"],time:["ディナー"],brk:["放課後・全休"],point:"打ち上げの王道。コスパのいい食べ放題コースあり。大人数で予約して盛り上がるならここ。"},
+  {emoji:"🍣",name:"立ち寿司 まわらない",mood:["和食"],dist:8,price:"3000〜5000円",reserve:"予約可能",smoke:"完全禁煙",niche:"秘境",yum:["圧倒的美味"],owner:"適度な距離感",atmos:["静か・落ち着き"],people:["1人","2人"],companion:["恋人","先輩"],time:["ディナー"],brk:["放課後・全休"],point:"カウンター7席だけの立ち寿司。学生には背伸びだけど、ここぞの日に。ネタの鮮度がガチ。"},
+  {emoji:"🍔",name:"バーガースタンド GABU",mood:["洋食","がっつり・こってり"],dist:4,price:"1000〜2000円",reserve:"予約不可",smoke:"完全禁煙",niche:"中堅",yum:["中毒性あり","コスパ重視"],owner:"フレンドリー",atmos:["おしゃれ・洗練"],people:["1人","2人","3〜4人"],companion:["気の置けない友人","好きな人"],time:["ランチ","カフェタイム","ディナー"],brk:["昼休み","空きコマ"],point:"肉汁あふれるクラフトバーガー。テイクアウトして空きコマにキャンパスのベンチで食べるのが通。"},
+  {emoji:"🍲",name:"ひとり鍋 ぽかぽか亭",mood:["和食","あっさり・ヘルシー"],dist:10,price:"1000〜2000円",reserve:"予約してもしなくてもいい",smoke:"完全禁煙",niche:"秘境",yum:["中毒性あり"],owner:"完全無干渉",atmos:["静か・落ち着き"],people:["1人","2人"],companion:["ひとりで"],time:["ランチ","ディナー","深夜"],brk:["空きコマ","放課後・全休"],point:"一人用の小鍋がウリ。誰にも干渉されず黙々と食べたい日に。野菜たっぷりで罪悪感ゼロ。"},
+  {emoji:"🌮",name:"タコス酒場 アミーゴ",mood:["その他海外料理","がっつり・こってり"],dist:13,price:"2000〜3000円",reserve:"予約可能",smoke:"喫煙より",niche:"秘境",yum:["中毒性あり"],owner:"フレンドリー",atmos:["ワイワイ・ガヤガヤ"],people:["3〜4人","5人以上"],companion:["気の置けない友人","ゼミ・サークルの団体"],time:["ディナー","深夜","終電逃し後"],brk:["放課後・全休"],point:"陽気なメキシカン。終電逃した時の避難所。ノリで盛り上がりたいサークルの二次会に。"},
+  {emoji:"🍤",name:"天ぷら定食 さくさく庵",mood:["和食","がっつり・こってり"],dist:6,price:"1000〜2000円",reserve:"予約不可",smoke:"完全禁煙",niche:"定番",yum:["コスパ重視"],owner:"適度な距離感",atmos:["静か・落ち着き"],people:["1人","2人"],companion:["ひとりで","先輩","後輩"],time:["ランチ"],brk:["昼休み"],point:"揚げたて天丼が安い。回転が早いから昼休みのサクッと飯に最適。先輩との昼ごはんにも無難。"},
+  {emoji:"🍛",name:"欧風カレー 琥珀",mood:["洋食","がっつり・こってり"],dist:7,price:"1000〜2000円",reserve:"予約してもしなくてもいい",smoke:"完全禁煙",niche:"中堅",yum:["圧倒的美味","中毒性あり"],owner:"完全無干渉",atmos:["静か・落ち着き"],people:["1人","2人"],companion:["ひとりで","好きな人"],time:["ランチ","カフェタイム","ディナー"],brk:["空きコマ"],point:"2日煮込んだ濃厚ルー。BGMはジャズ、静かに過ごせる。読書しながらのひとり飯にもうってつけ。"},
+  {emoji:"🥘",name:"スンドゥブ専門 火花",mood:["アジア系","がっつり・こってり"],dist:5,price:"1000〜2000円",reserve:"予約不可",smoke:"完全禁煙",niche:"定番",yum:["中毒性あり","コスパ重視"],owner:"フレンドリー",atmos:["ワイワイ・ガヤガヤ"],people:["1人","2人","3〜4人"],companion:["気の置けない友人","後輩"],time:["ランチ","ディナー"],brk:["昼休み","放課後・全休"],point:"辛さ7段階のスンドゥブ。汗だくになりながら友達と挑戦するのが楽しい。ごはんおかわり自由。"},
+  {emoji:"🧆",name:"ケバブ屋台 イスタン",mood:["その他海外料理","がっつり・こってり"],dist:2,price:"1000円未満",reserve:"予約不可",smoke:"完全禁煙",niche:"中堅",yum:["コスパ重視","中毒性あり"],owner:"フレンドリー",atmos:["ワイワイ・ガヤガヤ"],people:["1人","2人"],companion:["ひとりで","気の置けない友人"],time:["ランチ","カフェタイム","深夜"],brk:["昼休み","空きコマ","放課後・全休"],point:"大学門前の屋台。500円でボリューム満点のケバブサンド。歩きながら食べられて空きコマの味方。"},
+  {emoji:"🍰",name:"純喫茶 ことり",mood:["軽食・甘いもの"],dist:8,price:"1000〜2000円",reserve:"予約不可",smoke:"完全禁煙",niche:"秘境",yum:["圧倒的美味"],owner:"完全無干渉",atmos:["静か・落ち着き","ディープ・レトロ"],people:["1人","2人"],companion:["ひとりで","好きな人"],time:["モーニング","カフェタイム"],brk:["空きコマ","放課後・全休"],point:"昭和レトロな純喫茶。分厚いホットケーキと深煎り珈琲。長居しても怒られない。",cafe:true,cafeTags:["読書向き","完全禁煙","長居しやすい","静か","レトロ"]},
+  {emoji:"📚",name:"本と珈琲 余白",mood:["軽食・甘いもの"],dist:12,price:"1000〜2000円",reserve:"予約不可",smoke:"完全禁煙",niche:"秘境",yum:["圧倒的美味"],owner:"完全無干渉",atmos:["静か・落ち着き"],people:["1人"],companion:["ひとりで"],time:["モーニング","カフェタイム"],brk:["空きコマ","放課後・全休"],point:"壁一面が本棚のブックカフェ。私語厳禁の集中席あり。レポートが捗りすぎる隠れ家。",cafe:true,cafeTags:["読書向き","完全禁煙","長居しやすい","静か","電源あり","Wi-Fi"]},
+  {emoji:"☕",name:"喫茶 こもれび",mood:["軽食・甘いもの"],dist:15,price:"1000〜2000円",reserve:"予約不可",smoke:"完全禁煙",niche:"秘境",yum:["中毒性あり"],owner:"フレンドリー",atmos:["静か・落ち着き","ディープ・レトロ"],people:["1人","2人"],companion:["ひとりで","気の置ける友人"],time:["モーニング","カフェタイム","ランチ"],brk:["放課後・全休"],point:"古民家を改装した一軒家カフェ。庭を眺めながらの自家製プリンが絶品。時間がゆっくり流れる。",cafe:true,cafeTags:["読書向き","完全禁煙","長居しやすい","Wi-Fi"]},
+  {emoji:"🫖",name:"日本茶スタンド 一服",mood:["軽食・甘いもの","あっさり・ヘルシー"],dist:6,price:"1000円未満",reserve:"予約不可",smoke:"完全禁煙",niche:"中堅",yum:["圧倒的美味"],owner:"適度な距離感",atmos:["おしゃれ・洗練","静か・落ち着き"],people:["1人","2人"],companion:["ひとりで","好きな人"],time:["カフェタイム","空きコマ"],brk:["空きコマ"],point:"こだわりの日本茶と和菓子のスタンド。コンパクトだけど落ち着く。授業の合間のリセットに。",cafe:true,cafeTags:["完全禁煙","静か","電源あり"]}
+];
+const QUIZ = [
+  {q:"「半チャンラーメン」が名物の、昭和から続く大学前の町中華はどこ？",opts:["町中華 龍王軒","トラットリア・ボーノ","本と珈琲 余白"],a:0,exp:"正解は町中華 龍王軒！半チャンラーメンの破壊力に加え、深夜まで営業しているので飲んだ後の〆にも最強です。",link:"町中華 龍王軒"},
+  {q:"打ち上げで大人数の食べ放題に行くならどの店が定番？",opts:["純喫茶 ことり","七輪焼肉 もくもく亭","ひとり鍋 ぽかぽか亭"],a:1,exp:"正解は七輪焼肉 もくもく亭！コスパのいい食べ放題コースがあり、サークルの打ち上げの王道です。予約必須なのでお早めに。",link:"七輪焼肉 もくもく亭"},
+  {q:"壁一面が本棚で、私語厳禁の集中席があるブックカフェは？",opts:["バーガースタンド GABU","本と珈琲 余白","タコス酒場 アミーゴ"],a:1,exp:"正解は本と珈琲 余白！電源・Wi-Fi完備でレポートが捗りすぎる隠れ家。地図には載りにくい秘境カフェです。",link:"本と珈琲 余白"},
+  {q:"大学の門前にあり、500円でボリューム満点。歩きながら食べられる屋台は？",opts:["ケバブ屋台 イスタン","立ち寿司 まわらない","欧風カレー 琥珀"],a:0,exp:"正解はケバブ屋台 イスタン！徒歩2分の門前屋台で、空きコマのおやつ感覚にぴったりです。",link:"ケバブ屋台 イスタン"},
+  {q:"終電を逃した夜に、陽気に盛り上がれる避難所メキシカンは？",opts:["天ぷら定食 さくさく庵","タコス酒場 アミーゴ","日本茶スタンド 一服"],a:1,exp:"正解はタコス酒場 アミーゴ！深夜〜終電逃し後まで開いていて、サークルの二次会にも◎。",link:"タコス酒場 アミーゴ"},
+  {q:"汗だくになりながら友達と挑戦したい、辛さ7段階の専門店は？",opts:["スンドゥブ専門 火花","おでん横丁 だしの","喫茶 こもれび"],a:0,exp:"正解はスンドゥブ専門 火花！ごはんおかわり自由で、友達とワイワイ辛さに挑戦するのが楽しい店です。",link:"スンドゥブ専門 火花"},
+];
+const TITLES=[{n:0,t:"グルメ見習い"},{n:3,t:"街グルメ初段"},{n:6,t:"食通アンバサダー"},{n:10,t:"街グルメマスター"},{n:15,t:"伝説のグルメ仙人"}];
+
+/* ---------- 状態 ---------- */
+const LS="cocoico_v1";
+let store = JSON.parse(localStorage.getItem(LS) || "null") || {points:0, registered:[], quizCorrect:0, quizSeen:[], favs:[], visited:false};
+store.favs = store.favs || [];
+function save(){ localStorage.setItem(LS, JSON.stringify(store)); }
+function allRestos(){ return SEED.concat(store.registered); }
+let muted = localStorage.getItem('cocoico_muted')==='1';
+
+/* =========================================================
+   WebAudio 効果音エンジン（合成のみ・外部音源なし）
+   ========================================================= */
+let AC=null;
+function audio(){ if(muted) return null; try{ if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume(); return AC; }catch(e){ return null; } }
+function tone(freq, dur, type='sine', vol=0.1, glideTo=null, when=0){
+  const ac=audio(); if(!ac) return;
+  const t=ac.currentTime+when;
+  const o=ac.createOscillator(), g=ac.createGain();
+  o.type=type; o.frequency.setValueAtTime(freq,t);
+  if(glideTo) o.frequency.linearRampToValueAtTime(glideTo, t+dur);
+  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+0.008); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g).connect(ac.destination); o.start(t); o.stop(t+dur+0.02);
+}
+let lastTap=0;
+function sfxTap(){ const n=performance.now(); if(n-lastTap<45) return; lastTap=n; tone(460,0.06,'sine',0.06,680); }
+function sfxTick(vel){ tone(1200,0.012,'square',Math.min(0.05,0.02+vel*0.06)); }
+function sfxWin(){ const ac=audio(); if(!ac) return; [523,659,784].forEach((f,i)=>tone(f,0.5,'triangle',0.08,null,i*0.06)); tone(1568,0.3,'sine',0.05,null,0.18); }
+function sfxFanfare(){ const ac=audio(); if(!ac) return; [392,523,659,784].forEach((f,i)=>tone(f,0.32,'triangle',0.09,null,i*0.09)); tone(1046,0.4,'sine',0.06,null,0.36);
+  // 紙吹雪同期ノイズ
+  if(ac){ const b=ac.createBuffer(1,ac.sampleRate*0.18,ac.sampleRate); const d=b.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*(1-i/d.length); const s=ac.createBufferSource(); const g=ac.createGain(); g.gain.value=0.05; s.buffer=b; s.connect(g).connect(ac.destination); s.start(); } }
+function sfxQuiz(ok, combo){ if(ok){ const base=880+Math.min(combo,8)*40; tone(base,0.12,'sine',0.08,base*1.5);} else { tone(220,0.16,'sawtooth',0.05,180);} }
+function sfxRank(){ const ac=audio(); if(!ac) return; [392,494,587,740,880].forEach((f,i)=>tone(f,0.4,'triangle',0.09,null,i*0.1)); tone(80,0.5,'sine',0.12,null,0); }
+function toggleMute(){
+  muted=!muted; localStorage.setItem('cocoico_muted', muted?'1':'0');
+  document.getElementById('muteBtn').textContent = muted?'🔇':'🔊';
+  if(!muted){ audio(); sfxTap(); toast('🔊','効果音オン'); } else { toast('🔇','ミュート'); }
+}
+
+/* =========================================================
+   共通モーション基盤
+   ========================================================= */
+function esc(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+let toastTimer;
+function toast(icon,msg,gold){
+  const t=document.getElementById('toast');
+  t.innerHTML = (icon?`<span>${icon}</span>`:'')+`<span>${esc(msg)}</span>`;
+  t.classList.toggle('gold', !!gold); t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'), 2600);
+}
+/* count-up エンジン */
+function animateNumber(el, from, to, dur=700){
+  if(from===to){ el.textContent=to; return; }
+  const start=performance.now(); const diff=to-from;
+  function frame(now){
+    const p=Math.min(1,(now-start)/dur); const e=1-Math.pow(1-p,3);
+    el.textContent = Math.round(from+diff*e);
+    if(p<1) requestAnimationFrame(frame); else el.textContent=to;
+  }
+  requestAnimationFrame(frame);
+}
+let prevStats={points:0, reg:0, quiz:0, rank:''};
+function refreshStats(initial){
+  const reg=store.registered.length, rank=currentTitle().t;
+  document.getElementById('ptDisplay').textContent=store.points;
+  // ホームのスコアボード
+  const map=[['sbPt','md-pt',prevStats.points,store.points],['sbReg','md-reg',prevStats.reg,reg],['sbQuiz','md-quiz',prevStats.quiz,store.quizCorrect]];
+  map.forEach(([id,medal,from,to])=>{
+    const el=document.getElementById(id);
+    if(initial){ el.textContent=to; }
+    else { animateNumber(el, from, to); if(to>from){ floatPlus(medal, to-from); document.getElementById(medal).classList.add('flash'); setTimeout(()=>document.getElementById(medal).classList.remove('flash'),520);} }
+  });
+  document.getElementById('sbRank').textContent=rank;
+  prevStats={points:store.points, reg, quiz:store.quizCorrect, rank};
+}
+function floatPlus(medalId, n){
+  const fp=document.querySelector('#'+medalId+' .floatp'); if(!fp) return;
+  fp.textContent='+'+n; fp.style.transition='none'; fp.style.opacity='1'; fp.style.transform='translateY(0)';
+  requestAnimationFrame(()=>{ fp.style.transition='all .8s var(--ease-out)'; fp.style.opacity='0'; fp.style.transform='translateY(-16px)'; });
+}
+function currentTitle(){ let c=TITLES[0]; TITLES.forEach(t=>{ if(store.quizCorrect>=t.n) c=t; }); return c; }
+
+/* ---------- ビュー遷移（とろみワイプ + FLIP絵文字） ---------- */
+const SECT_EMOJI={strict:'te-strict',roulette:'te-roulette',quiz:'te-quiz',register:'te-register',cafe:'te-cafe'};
+let lastTapXY={x:innerWidth/2,y:80};
+document.addEventListener('pointerdown', e=>{ lastTapXY={x:e.clientX,y:e.clientY}; }, {capture:true});
+function reducedMotion(){ return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+
+function go(id, srcEl){
+  const cur=document.querySelector('section.active');
+  if(cur && cur.id===id){ return; }
+  // FLIP: モードカードの絵文字を次画面の見出し絵文字へ飛ばす
+  let flySrc=null;
+  if(srcEl){ const em=srcEl.querySelector('.me-emoji'); if(em) flySrc=em; }
+  const wipe=document.getElementById('wipe');
+  const doSwap=()=>{
+    document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelectorAll('nav.dock button.navb').forEach(b=>b.classList.toggle('on', b.dataset.nav===id));
+    window.scrollTo({top:0,behavior:'auto'});
+    if(id==='strict') startChat();
+    if(id==='roulette') drawWheel();
+    if(id==='quiz') renderQuiz();
+    if(id==='cafe') renderCafe();
+    refreshStats(true);
+    if(flySrc && SECT_EMOJI[id]) flyEmoji(flySrc, document.getElementById(SECT_EMOJI[id]));
+  };
+  if(reducedMotion()){ doSwap(); return; }
+  // とろみワイプ（clip-pathのみで制御。idleはcircle(0%)で不可視・pointer-events:none）
+  wipe.style.setProperty('--wx', lastTapXY.x+'px');
+  wipe.style.setProperty('--wy', lastTapXY.y+'px');
+  wipe.style.transition='none'; wipe.style.clipPath='circle(0% at var(--wx) var(--wy))';
+  requestAnimationFrame(()=>{
+    wipe.style.transition='clip-path 300ms var(--ease-wipe)';
+    wipe.style.clipPath='circle(150% at var(--wx) var(--wy))';
+  });
+  setTimeout(()=>{
+    doSwap();
+    wipe.style.transition='clip-path 380ms var(--ease-wipe)';
+    wipe.style.clipPath='circle(0% at var(--wx) var(--wy))';
+  }, 310);
+}
+function flyEmoji(srcEl, destEl){
+  try{
+    const s=srcEl.getBoundingClientRect(), d=destEl.getBoundingClientRect();
+    const fly=document.getElementById('flyer');
+    fly.textContent=srcEl.textContent;
+    fly.style.display='block';
+    fly.style.left=s.left+'px'; fly.style.top=s.top+'px';
+    fly.style.transform='translate(0,0) scale(1)'; fly.style.opacity='1';
+    fly.style.transition='none';
+    const dx=(d.left+d.width/2)-(s.left+s.width/2), dy=(d.top+d.height/2)-(s.top+s.height/2);
+    requestAnimationFrame(()=>{
+      fly.style.transition='transform 520ms var(--ease-out), opacity 520ms ease';
+      fly.style.transform=`translate(${dx}px,${dy}px) scale(${(d.height/s.height)||0.8})`;
+    });
+    setTimeout(()=>{ fly.style.opacity='0'; }, 460);
+    setTimeout(()=>{ fly.style.display='none'; }, 560);
+  }catch(e){}
+}
+
+/* ---------- 外部リンク ---------- */
+function hpUrl(n){ return "https://www.hotpepper.jp/CSP/qsearch/?freeword="+encodeURIComponent(n); }
+function tbUrl(n){ return "https://tabelog.com/rstLst/?sk="+encodeURIComponent(n); }
+
+/* ---------- 店舗カード ---------- */
+function rarityClass(n){ return n==='秘境'?'r-legend':(n==='中堅'?'r-mid':'r-common'); }
+function nicheBadge(n){ const m={'秘境':['b-niche-legend','🗺️ 秘境'],'中堅':['b-niche-mid','🏮 知る人ぞ知る'],'定番':['b-niche-common','⭐ 定番']}; const x=m[n]||m['定番']; return `<span class="badge ${x[0]}">${x[1]}</span>`; }
+function isFav(n){ return store.favs.includes(n); }
+function restoCard(r, score, delay){
+  const newB = r.userAdded ? '<span class="badge b-new">✨ あなたの発見</span>' : '';
+  const sc = (score!=null)? `<div class="score-chip"><b class="num">${score}</b><small>match</small></div>` : '';
+  const mood=(r.mood||[]).slice(0,2).map(m=>`<span class="badge b-mood">${m}</span>`).join('');
+  const yum=(r.yum||[]).slice(0,1).map(y=>`<span class="badge b-yum">${y}</span>`).join('');
+  return `<div class="resto ${rarityClass(r.niche)}" style="--d:${delay||0}ms">
+    <span class="rarity"></span>
+    <div class="rtop">
+      <div class="emoji">${r.emoji||'🍽️'}</div>
+      <div style="flex:1;min-width:0;">
+        <h3>${esc(r.name)}</h3>
+        <div class="meta">📍 大学から徒歩${r.dist}分 ・ ${r.price} ・ ${r.reserve}</div>
+        <div class="badges">${nicheBadge(r.niche)}${mood}${yum}${newB}</div>
+      </div>${sc}
+    </div>
+    <p class="point">💬 ${esc(r.point)}</p>
+    <div class="links">
+      <button class="favbtn tap ${isFav(r.name)?'on':''}" onclick="toggleFav('${esc(r.name).replace(/'/g,'')}',this)" title="お気に入り">${isFav(r.name)?'❤️':'🤍'}</button>
+      <a class="l-hp tap" href="${hpUrl(r.name)}" target="_blank" rel="noopener">🔥 ホットペッパー</a>
+      <a class="l-tb tap" href="${tbUrl(r.name)}" target="_blank" rel="noopener">食べログ</a>
+    </div>
+  </div>`;
+}
+function toggleFav(name, el){
+  const i=store.favs.indexOf(name);
+  if(i<0){ store.favs.push(name); el.textContent='❤️'; el.classList.add('on'); toast('❤️','お気に入りに追加'); }
+  else { store.favs.splice(i,1); el.textContent='🤍'; el.classList.remove('on'); }
+  save();
+}
+
+/* =========================================================
+   厳選モード（チャットボット）
+   ========================================================= */
+const CHAT_STEPS=[
+  {key:"companion",q:"誰と行くのかな？🙂",opts:OPT.companion,ing:"🧑‍🤝‍🧑"},
+  {key:"people",q:"何人で行く予定？👥",opts:OPT.people,ing:"🪑"},
+  {key:"time",q:"いつ行く？時間帯を教えて🕐",opts:OPT.time,ing:"🕐"},
+  {key:"price",q:"予算はどれくらい？💰",opts:OPT.price,ing:"💰"},
+  {key:"mood",q:"今日はどんな気分？🍴",opts:OPT.mood,ing:"🍜"},
+  {key:"atmos",q:"お店の雰囲気の希望は？✨",opts:OPT.atmos,ing:"🏮"},
+  {key:"smoke",q:"たばこは？🚭",opts:OPT.smoke,ing:"🌿"},
+];
+let chatIdx=0, chatAns={};
+function startChat(){
+  chatIdx=0; chatAns={};
+  document.getElementById('chatLog').innerHTML='';
+  document.getElementById('chatChoices').innerHTML='';
+  document.getElementById('chatResult').innerHTML='';
+  document.getElementById('simmer').innerHTML = CHAT_STEPS.map(s=>`<span class="ing">${s.ing}</span>`).join('');
+  botTyping(()=>{ botSay("こんにちは！AIココ助だよ🍳<br>失敗できない店選び、一緒に決めよう。いくつか質問するね！"); setTimeout(askChat,500); });
+}
+function botTyping(then){
+  const log=document.getElementById('chatLog');
+  const t=document.createElement('div'); t.className='bubble bot'; t.innerHTML='<div class="typing"><i></i><i></i><i></i></div>';
+  log.appendChild(t); scrollChat();
+  setTimeout(()=>{ t.remove(); then(); }, reducedMotion()?60:600);
+}
+function botSay(html){
+  const log=document.getElementById('chatLog');
+  log.insertAdjacentHTML('beforeend', `<div class="bubble bot"><div class="who"><span class="av">🍳</span>ココ助</div>${html}</div>`);
+  scrollChat();
+}
+function meSay(text){ document.getElementById('chatLog').insertAdjacentHTML('beforeend', `<div class="bubble me">${esc(text)}</div>`); scrollChat(); }
+function scrollChat(){ window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'}); }
+function askChat(){
+  // 煮込みゲージ
+  [...document.querySelectorAll('#simmer .ing')].forEach((e,i)=>e.classList.toggle('lit', i<chatIdx));
+  if(chatIdx>=CHAT_STEPS.length){ finishChat(); return; }
+  const step=CHAT_STEPS[chatIdx];
+  botTyping(()=>{
+    botSay(step.q);
+    document.getElementById('chatChoices').innerHTML =
+      `<div class="chips" style="margin-top:6px;">`+
+      step.opts.map((o,i)=>`<div class="chip tap" style="animation-delay:${i*55}ms" onclick="answerChat('${step.key}','${o.replace(/'/g,'')}')">${o}</div>`).join('')+`</div>`;
+  });
+}
+function answerChat(key,val){
+  chatAns[key]=val; meSay(val);
+  document.getElementById('chatChoices').innerHTML='';
+  chatIdx++; setTimeout(askChat,300);
+}
+function finishChat(){
+  [...document.querySelectorAll('#simmer .ing')].forEach(e=>e.classList.add('lit'));
+  botTyping(()=>{
+    botSay("条件にぴったりの店を厳選したよ！この中ならハズレなし、いってらっしゃい✨");
+    const ranked=allRestos().map(r=>({r,s:scoreResto(r,chatAns)})).sort((a,b)=>b.s-a.s).slice(0,3);
+    let html='<div style="margin-top:10px;">'+ranked.map((x,i)=>restoCard(x.r,x.s,i*120)).join('')+'</div>';
+    html+='<button class="btn ghost sm tap" onclick="startChat()">🔄 条件を変えてやり直す</button>';
+    document.getElementById('chatResult').innerHTML=html;
+    sfxWin();
+    scrollChat();
+  });
+}
+function scoreResto(r,a){
+  let s=0; const inc=(arr,v,p)=>{ if(v&&arr&&arr.includes(v)) s+=p; };
+  inc(r.companion,a.companion,25); inc(r.people,a.people,15); inc(r.time,a.time,15);
+  inc(r.mood,a.mood,25); inc(r.atmos,a.atmos,20);
+  if(a.price&&r.price===a.price) s+=20;
+  if(a.smoke){ if(r.smoke===a.smoke) s+=15; else if((a.smoke==="完全禁煙"||a.smoke==="禁煙より")&&r.smoke==="完全禁煙") s+=10; }
+  s+=Math.max(0,10-r.dist);
+  return Math.min(99,s);
+}
+
+/* =========================================================
+   探索モード（ルーレット / Canvas + 物理減衰 + 磁石スナップ）
+   ========================================================= */
+let rouletteScope="all";
+document.getElementById('rouletteScope').addEventListener('click',e=>{
+  const c=e.target.closest('.chip'); if(!c) return;
+  document.querySelectorAll('#rouletteScope .chip').forEach(x=>x.classList.remove('sel'));
+  c.classList.add('sel'); rouletteScope=c.dataset.r; drawWheel();
+});
+function roulettePool(){
+  let pool=allRestos().filter(r=>!r.cafe);
+  if(rouletteScope!=="all") pool=pool.filter(r=>r.niche===rouletteScope);
+  if(pool.length<2) pool=allRestos().filter(r=>!r.cafe);
+  return pool.slice(0,8);
+}
+const W_COLORS=["#FF6A2B","#FFC23C","#C0341C","#FF8A3D","#FFB02E","#E5431A","#FF7A2F","#FFD25A"];
+let wheelAngle=0, wheelVel=0, wheelRAF=null, wheelPool=[], spinning=false, lastUnder=-1;
+function shortName(n){ return n.length>7?n.slice(0,7)+"…":n; }
+function drawWheel(){
+  const pool=roulettePool(); wheelPool=pool;
+  const cv=document.getElementById('wheel'), ctx=cv.getContext('2d'); const SZ=300, cx=150, cy=150, R=150, N=pool.length;
+  ctx.clearRect(0,0,SZ,SZ);
+  for(let i=0;i<N;i++){
+    const a0=(i/N)*2*Math.PI-Math.PI/2, a1=((i+1)/N)*2*Math.PI-Math.PI/2;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,R,a0,a1); ctx.closePath();
+    ctx.fillStyle=W_COLORS[i%W_COLORS.length]; ctx.fill();
+    ctx.strokeStyle="rgba(255,255,255,.5)"; ctx.lineWidth=2; ctx.stroke();
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate((a0+a1)/2);
+    ctx.fillStyle="#fff"; ctx.font="bold 14px sans-serif"; ctx.textAlign="right"; ctx.textBaseline="middle";
+    ctx.shadowColor="rgba(0,0,0,.25)"; ctx.shadowBlur=3;
+    ctx.fillText(pool[i].emoji+" "+shortName(pool[i].name), R-16, 0);
+    ctx.restore();
+  }
+  cv.style.transform=`rotate(${wheelAngle}deg)`;
+}
+function sectorUnderPointer(angleDeg, N){
+  // ポインタ=上(-90°)。各セクタ中心のスクリーン角を計算し最寄りを返す
+  const sec=360/N; let best=0, bestD=1e9;
+  for(let i=0;i<N;i++){
+    let center=((i+0.5)*sec-90+angleDeg)%360; center=((center+540)%360)-180; // [-180,180]
+    const d=Math.abs(center-(-90)); const dd=Math.min(d,360-d);
+    if(dd<bestD){ bestD=dd; best=i; }
+  }
+  return best;
+}
+function spin(){
+  if(spinning) return;
+  const pool=wheelPool.length?wheelPool:roulettePool(); const N=pool.length;
+  spinning=true; document.getElementById('spinBtn').disabled=true;
+  document.getElementById('rouletteResult').innerHTML='';
+  lastUnder=-1;
+  if(reducedMotion()){
+    wheelAngle=(wheelAngle+720+Math.random()*360); const cv=document.getElementById('wheel'); cv.style.transform=`rotate(${wheelAngle}deg)`;
+    setTimeout(()=>finishSpin(pool, sectorUnderPointer(wheelAngle,N)), 200); return;
+  }
+  wheelVel = 16 + Math.random()*8; // deg/frame
+  const cv=document.getElementById('wheel');
+  function step(){
+    wheelAngle += wheelVel; wheelVel *= 0.985;
+    cv.style.transform=`rotate(${wheelAngle}deg)`;
+    const u=sectorUnderPointer(wheelAngle,N);
+    if(u!==lastUnder){ lastUnder=u; sfxTick(wheelVel/16); }
+    if(wheelVel<0.45){ snapAndFinish(pool,N); return; }
+    wheelRAF=requestAnimationFrame(step);
+  }
+  wheelRAF=requestAnimationFrame(step);
+}
+function snapAndFinish(pool,N){
+  const sec=360/N; const i=sectorUnderPointer(wheelAngle,N);
+  // セクタ中心を上に合わせる target angle
+  let target = wheelAngle;
+  // 現在の中心ズレを補正：center=( (i+0.5)*sec -90 + a )=-90 (mod360) → a = -(i+0.5)*sec (mod360)
+  let want = (-(i+0.5)*sec)%360;
+  let cur = wheelAngle%360;
+  let delta = (want-cur); delta=((delta+540)%360)-180;
+  target = wheelAngle + delta;
+  const cv=document.getElementById('wheel'); const start=wheelAngle, dur=420, t0=performance.now();
+  function ease(now){
+    const p=Math.min(1,(now-t0)/dur); const e=1-Math.pow(1-p,3);
+    wheelAngle=start+(target-start)*e; cv.style.transform=`rotate(${wheelAngle}deg)`;
+    if(p<1) requestAnimationFrame(ease); else finishSpin(pool,i);
+  }
+  requestAnimationFrame(ease);
+}
+function finishSpin(pool, idx){
+  spinning=false; document.getElementById('spinBtn').disabled=false;
+  const r=pool[idx];
+  sparkBurst(); sfxWin();
+  const banner = r.niche==='秘境' ? '🗺️ 未知の秘境を引き当てた！' : '🎉 今日のお告げはこの店！';
+  document.getElementById('rouletteResult').innerHTML=
+    `<div class="win-banner">${banner}</div><div class="win-name grad-text">${esc(r.name)}</div>`+restoCard(r,null,0)+
+    `<button class="btn ghost sm tap" onclick="spin()">🎲 もう一皿まわす</button>`;
+  if(r.niche==='秘境') toast('🗺️','秘境ヒット！冒険しよう',true);
+  window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+}
+
+/* =========================================================
+   店舗登録（白熱フラッシュ→紙吹雪→称賛モーダル→開拓者カード）
+   ========================================================= */
+function buildRegChips(){
+  fillChips('regMood',OPT.mood,true);
+  fillChips('regPrice',OPT.price,false);
+  fillChips('regNiche',OPT.niche,false);
+  document.querySelector('#regPrice .chip').classList.add('sel');
+  document.querySelectorAll('#regNiche .chip')[2].classList.add('sel');
+}
+function fillChips(id,arr,multi){
+  const box=document.getElementById(id);
+  box.innerHTML=arr.map(o=>`<div class="chip tap" data-v="${o}">${o}</div>`).join('');
+  box.addEventListener('click',e=>{
+    const c=e.target.closest('.chip'); if(!c) return;
+    if(multi) c.classList.toggle('sel');
+    else { box.querySelectorAll('.chip').forEach(x=>x.classList.remove('sel')); c.classList.add('sel'); }
+  });
+}
+function getChips(id){ return [...document.querySelectorAll('#'+id+' .chip.sel')].map(c=>c.dataset.v); }
+function submitRegister(){
+  const name=document.getElementById('regName').value.trim();
+  const point=document.getElementById('regPoint').value.trim();
+  if(!name){ toast('✍️','店名を入力してね'); return; }
+  if(!point){ toast('✍️','おすすめポイントを書いてね'); return; }
+  const mood=getChips('regMood'); const price=getChips('regPrice')[0]||"1000〜2000円";
+  const niche=getChips('regNiche')[0]||"中堅"; const dist=parseInt(document.getElementById('regDist').value,10);
+  const isCafe=document.getElementById('regCafe').checked;
+  const known=allRestos().some(r=>r.name.replace(/\s/g,'')===name.replace(/\s/g,''));
+  const ns={emoji:isCafe?"☕":"🍽️",name,mood:mood.length?mood:["和食"],dist,price,reserve:"予約してもしなくてもいい",
+    smoke:isCafe?"完全禁煙":"分煙",niche,yum:["コスパ重視"],owner:"フレンドリー",atmos:[isCafe?"静か・落ち着き":"ワイワイ・ガヤガヤ"],
+    people:["1人","2人"],companion:["気の置けない友人"],time:["ランチ","ディナー"],brk:["放課後・全休"],point,userAdded:true,
+    cafe:isCafe,cafeTags:isCafe?["完全禁煙","読書向き","長居しやすい"]:[]};
+  store.registered.push(ns);
+  const before=store.points; const gain = known?10:50; store.points+=gain; save();
+  document.getElementById('regName').value=''; document.getElementById('regPoint').value=''; document.getElementById('regCafe').checked=false;
+  if(!known){
+    const discoverer = SEED.length + store.registered.length;
+    whiteFlash(); confetti(); sfxFanfare();
+    showPraise('🏆','新規開拓ありがとう！', `「${esc(name)}」はまだ誰も知らないお宝店！<br>あなたが <b>${discoverer}</b> 軒目の発見者です。`,
+      gain, before, store.points, name, true);
+  } else {
+    toast('📌','登録ありがとう！ +10ココポイント');
+    refreshStats(false);
+  }
+}
+function showPraise(big,head,body,gain,from,to,name,pioneer){
+  const box=document.getElementById('praiseBox');
+  const pcard = pioneer ? `<div class="pioneer"><div class="inner"><div class="pt">🏅 COCOiCO 開拓者カード</div><div class="pn">${esc(name)}</div><div class="pd">発見者：あなた ・ ${new Date().getFullYear()}年の手柄</div></div></div>` : '';
+  const gainLine = gain>0 ? `<div class="gain num"><span id="gainNum">+0</span> <span style="white-space:nowrap">ココポイント</span></div>` : '';
+  const shareBtn = pioneer ? `<button class="btn ghost sm tap" onclick="sharePioneer('${esc(name).replace(/'/g,'')}')">📋 シェアする</button>` : '';
+  box.innerHTML = `<div class="big">${big}</div><h3 class="grad-text">${esc(head)}</h3><p>${body}</p>
+    ${gainLine}${pcard}
+    <div class="modal-actions">${shareBtn}
+      <button class="btn sm tap" onclick="closePraise()">やった！</button>
+    </div>`;
+  document.getElementById('modalLayer').classList.add('show');
+  // ポイントcount-up
+  if(gain>0){
+    const gn=document.getElementById('gainNum'); const t0=performance.now();
+    (function up(now){ const p=Math.min(1,(now-t0)/700); const e=1-Math.pow(1-p,3); gn.textContent='+'+Math.round(gain*e); if(p<1) requestAnimationFrame(up); else gn.textContent='+'+gain; })(performance.now());
+  }
+  setTimeout(()=>refreshStats(false), 200);
+}
+function closePraise(){ document.getElementById('modalLayer').classList.remove('show'); sfxTap(); }
+function sharePioneer(name){
+  const text=`🍜COCOiCOで新しい名店「${name}」を開拓した！\n大学前のうまい店、まだまだあるぞ。#COCOiCO`;
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(()=>toast('📋','自慢テキストをコピーしたよ！',true)).catch(()=>toast('📋',text.slice(0,18)+'…')); }
+  else { toast('📋','コピー対応外の環境です'); }
+}
+function whiteFlash(){
+  const f=document.createElement('div'); f.style.cssText='position:fixed;inset:0;background:#fff;z-index:95;opacity:0;pointer-events:none;transition:opacity 120ms';
+  document.body.appendChild(f); requestAnimationFrame(()=>{ f.style.opacity='.25'; setTimeout(()=>{ f.style.opacity='0'; setTimeout(()=>f.remove(),140);},120); });
+}
+
+/* ---------- Canvas 紙吹雪 & 火花（fxCanvas 1系統） ---------- */
+const fx=document.getElementById('fxCanvas'); const fxc=fx.getContext('2d'); let fxRAF=null, fxParts=[];
+function fxResize(){ fx.width=innerWidth; fx.height=innerHeight; }
+function confetti(){
+  if(reducedMotion()){ toast('🎉','おめでとう！'); return; }
+  fxResize(); fx.style.display='block';
+  const colors=["#FF6A2B","#FFC23C","#C0341C","#FF8A3D","#2E9E6B","#FFD25A"];
+  fxParts=[];
+  for(let i=0;i<90;i++){ fxParts.push({x:innerWidth/2+(Math.random()*120-60), y:innerHeight*0.42, vx:(Math.random()*2-1)*7, vy:-(6+Math.random()*9), g:0.28+Math.random()*0.1, rot:Math.random()*6, vr:(Math.random()*2-1)*0.3, w:7+Math.random()*6, h:10+Math.random()*8, c:colors[i%colors.length], gold:Math.random()<0.25, life:0}); }
+  if(fxRAF) cancelAnimationFrame(fxRAF);
+  const t0=performance.now();
+  (function loop(now){
+    fxc.clearRect(0,0,fx.width,fx.height); let alive=false;
+    for(const p of fxParts){
+      p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.life=(now-t0);
+      if(p.y<fx.height+40 && p.life<1800){ alive=true;
+        fxc.save(); fxc.translate(p.x,p.y); fxc.rotate(p.rot);
+        if(p.gold){ fxc.fillStyle="#FFD25A"; fxc.beginPath(); fxc.arc(0,0,3.5,0,6.3); fxc.fill(); }
+        else { fxc.fillStyle=p.c; fxc.fillRect(-p.w/2,-p.h/2,p.w,p.h); }
+        fxc.restore();
+      }
+    }
+    if(alive) fxRAF=requestAnimationFrame(loop); else { fxc.clearRect(0,0,fx.width,fx.height); fx.style.display='none'; fxParts=[]; }
+  })(t0);
+}
+function sparkBurst(){
+  if(reducedMotion()) return;
+  fxResize(); fx.style.display='block';
+  const cx=innerWidth/2, cy=Math.min(innerHeight*0.42, 320);
+  let parts=[]; for(let i=0;i<16;i++){ const a=Math.random()*6.28, sp=3+Math.random()*5; parts.push({x:cx,y:cy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:0,c:["#FFC23C","#FF6A2B","#FFD25A"][i%3]}); }
+  if(fxRAF) cancelAnimationFrame(fxRAF);
+  const t0=performance.now();
+  (function loop(now){
+    fxc.clearRect(0,0,fx.width,fx.height); let alive=false;
+    for(const p of parts){ p.vy+=0.18; p.x+=p.vx; p.y+=p.vy; p.life=now-t0;
+      if(p.life<700){ alive=true; fxc.globalAlpha=Math.max(0,1-p.life/700); fxc.fillStyle=p.c; fxc.beginPath(); fxc.arc(p.x,p.y,3,0,6.3); fxc.fill(); fxc.globalAlpha=1; } }
+    if(alive) fxRAF=requestAnimationFrame(loop); else { fxc.clearRect(0,0,fx.width,fx.height); fx.style.display='none'; }
+  })(t0);
+}
+addEventListener('resize', ()=>{ if(fx.style.display==='block') fxResize(); });
+
+/* =========================================================
+   町のご飯屋クイズ（炎コンボ + 称号"火入れ"）
+   ========================================================= */
+let curQuiz=null, combo=0;
+function renderQuiz(){
+  updateTitleBar();
+  let pool=QUIZ.filter((_,i)=>!store.quizSeen.includes(i));
+  if(pool.length===0){ store.quizSeen=[]; pool=QUIZ.slice(); }
+  const idx=QUIZ.indexOf(pool[Math.floor(Math.random()*pool.length)]);
+  curQuiz={idx,q:QUIZ[idx],answered:false};
+  document.getElementById('quizCard').innerHTML=
+    `<div class="qnum">Q. 街のご飯屋クイズ</div><div class="qtext">${esc(curQuiz.q.q)}</div>
+     <div class="qopts">${curQuiz.q.opts.map((o,i)=>`<button class="qopt tap" data-k="${'ABC'[i]}" onclick="answerQuiz(${i})">${esc(o)}</button>`).join('')}</div>`;
+}
+function answerQuiz(i){
+  if(curQuiz.answered) return; curQuiz.answered=true;
+  const correct=curQuiz.q.a; const btns=document.querySelectorAll('#quizCard .qopt');
+  btns.forEach((b,bi)=>{ b.disabled=true; if(bi===correct) b.classList.add('correct'); if(bi===i&&i!==correct) b.classList.add('wrong'); });
+  const ok=(i===correct);
+  if(!store.quizSeen.includes(curQuiz.idx)) store.quizSeen.push(curQuiz.idx);
+  const before=currentTitle().t;
+  if(ok){ store.quizCorrect++; store.points+=5; combo++; } else { combo=0; }
+  save();
+  const after=currentTitle().t;
+  sfxQuiz(ok, combo);
+  // combo表示
+  const cv=document.getElementById('comboV'); cv.textContent=combo;
+  if(ok&&combo>1){ cv.style.transform='skewX(-6deg) scale(1.3)'; setTimeout(()=>cv.style.transform='skewX(-6deg)',200); }
+  const linked=allRestos().find(r=>r.name===curQuiz.q.link);
+  document.getElementById('quizCard').insertAdjacentHTML('beforeend',
+    `<div class="explain"><b>${ok?('⭕ 正解！ +5ココポイント'+(combo>1?` 🔥${combo}コンボ！`:'')):'❌ 残念！'}</b><br>${esc(curQuiz.q.exp)}
+      <div class="lead-next">👇 次はこの店に行ってみよう！</div></div>
+     ${linked?restoCard(linked,null,0):''}
+     <button class="btn sm tap" onclick="renderQuiz()" style="margin-top:8px;">次の問題へ ▶</button>`);
+  if(ok&&before!==after){ sfxRank(); rankUpFx(); showPraise('👑','称号ランクアップ！',`おめでとう！新しい称号<br><b style="color:var(--secondary);font-size:18px;">「${after}」</b><br>を獲得しました！`,0,store.points,store.points,'',false); }
+  updateTitleBar(); refreshStats(false);
+  document.querySelector('#quizCard .explain').scrollIntoView({behavior:'smooth',block:'center'});
+}
+function rankUpFx(){ confetti(); document.body.animate?document.body.animate([{filter:'saturate(1.4)'},{filter:'none'}],{duration:600}):0; }
+function updateTitleBar(){
+  const cur=currentTitle(); const next=TITLES.find(t=>t.n>store.quizCorrect);
+  document.getElementById('quizTitle').textContent=cur.t;
+  document.getElementById('quizCorrect').textContent=store.quizCorrect;
+  document.getElementById('quizNext').textContent=next?(next.n-store.quizCorrect):0;
+  document.getElementById('comboV').textContent=combo;
+}
+
+/* =========================================================
+   隠れ家喫茶店
+   ========================================================= */
+let cafeFilter=new Set();
+function renderCafe(){
+  const tags=["読書向き","完全禁煙","長居しやすい","静か","電源あり","Wi-Fi","レトロ"];
+  const ic={"読書向き":"📖","完全禁煙":"🚭","長居しやすい":"🛋","静か":"🤫","電源あり":"🔌","Wi-Fi":"📶","レトロ":"🕰"};
+  document.getElementById('cafeTags').innerHTML =
+    `<div class="chip tap ${cafeFilter.size===0?'sel':''}" onclick="clearCafe()">☕ すべて</div>`+
+    tags.map(t=>`<div class="chip tap ${cafeFilter.has(t)?'sel':''}" onclick="toggleCafe('${t}')">${ic[t]||''} ${t}</div>`).join('');
+  let list=allRestos().filter(r=>r.cafe);
+  if(cafeFilter.size>0) list=list.filter(r=>[...cafeFilter].every(t=>(r.cafeTags||[]).includes(t)));
+  const box=document.getElementById('cafeList');
+  if(list.length===0){ box.innerHTML='<div class="empty">条件に合う喫茶店はまだありません☕<br>「＋登録」から隠れ家を追加してみよう。</div>'; return; }
+  box.innerHTML=list.map((r,i)=>cafeCard(r,i*90)).join('');
+}
+function clearCafe(){ cafeFilter.clear(); renderCafe(); }
+function toggleCafe(t){ if(cafeFilter.has(t)) cafeFilter.delete(t); else cafeFilter.add(t); renderCafe(); }
+function cafeCard(r,delay){
+  const tags=(r.cafeTags||[]).map(t=>`<span class="badge b-yum">#${t}</span>`).join('');
+  return `<div class="resto cafe-card ${rarityClass(r.niche)}" style="--d:${delay||0}ms">
+    <span class="rarity"></span>
+    <div class="rtop"><div class="emoji">${r.emoji}</div>
+      <div style="flex:1;min-width:0;"><h3>${esc(r.name)}</h3>
+        <div class="meta">📍 大学から徒歩${r.dist}分 ・ ${r.price}</div>
+        <div class="badges">${tags}${r.userAdded?'<span class="badge b-new">✨ あなたの発見</span>':''}</div></div></div>
+    <p class="point">💬 ${esc(r.point)}</p>
+    <div class="links">
+      <button class="favbtn tap ${isFav(r.name)?'on':''}" onclick="toggleFav('${esc(r.name).replace(/'/g,'')}',this)" title="お気に入り">${isFav(r.name)?'❤️':'🤍'}</button>
+      <a class="l-hp tap" href="${hpUrl(r.name)}" target="_blank" rel="noopener">🔥 ホットペッパー</a>
+      <a class="l-tb tap" href="${tbUrl(r.name)}" target="_blank" rel="noopener">食べログ</a></div>
+  </div>`;
+}
+
+/* =========================================================
+   初期化
+   ========================================================= */
+function initTaps(){
+  // プリン・タップのSE（タップ可能要素のみ）
+  document.addEventListener('pointerdown', e=>{
+    const t=e.target.closest('.tap'); if(t) sfxTap();
+  }, true);
+}
+function initScrollHeader(){
+  let ticking=false;
+  addEventListener('scroll', ()=>{ if(ticking) return; ticking=true; requestAnimationFrame(()=>{ document.getElementById('noren').classList.toggle('shrunk', scrollY>16); ticking=false; }); }, {passive:true});
+}
+function initSplash(){
+  const sp=document.getElementById('splash');
+  const hide=()=>{ sp.classList.add('gone'); };
+  setTimeout(hide, 1300);
+  sp.addEventListener('click', hide);
+}
+function init(){
+  document.getElementById('muteBtn').textContent = muted?'🔇':'🔊';
+  document.getElementById('greet').textContent = store.visited ? 'おかえり！次の一軒、開拓しにいこう🔥' : 'はじめまして！今日の一軒、見つけにいこう。';
+  if(!store.visited){ store.visited=true; save(); }
+  buildRegChips();
+  refreshStats(true);
+  initTaps(); initScrollHeader(); initSplash();
+}
+init();
+</script>
+</body>
+</html>
