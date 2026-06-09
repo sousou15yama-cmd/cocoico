@@ -503,7 +503,6 @@ nav.dock button.navb.on::after{ content:""; position:absolute; bottom:-1px; widt
         <button class="btn-discover tap" onclick="go('register', this)"><span class="me-emoji" style="font-size:22px;filter:none;">✨</span> 知らない店を登録して、褒められる</button>
       </div>
 
-      <p class="note">※ 掲載店舗は食べログの掲載項目を模したサンプルデータです（店名はサンプル名）。各店から食べログ／ホットペッパー検索へ遷移できます。</p>
     </section>
 
     <!-- ========== STRICT ========== -->
@@ -584,8 +583,8 @@ nav.dock button.navb.on::after{ content:""; position:absolute; bottom:-1px; widt
 
     <!-- ========== DASHBOARD (Step2 機能2/3/5) ========== -->
     <section id="dashboard">
-      <h2 class="title"><span class="te" id="te-dashboard">📊</span>みんなのデータ分析</h2>
-      <p class="lead">共有DBに貯まった<strong>コミュニティ全体</strong>のデータを集計。人気店ランキング・記述統計・度数分布・クイズ難易度・A/Bテストを“数字”で見える化します。</p>
+      <h2 class="title"><span class="te" id="te-dashboard">🏆</span>みんなの人気店</h2>
+      <p class="lead">大学生のみんなが実際に選んでいる、いま人気のお店ランキングです。気になる一軒を見つけよう。</p>
       <div id="dashBody"></div>
     </section>
 
@@ -604,7 +603,7 @@ nav.dock button.navb.on::after{ content:""; position:absolute; bottom:-1px; widt
     <button class="navb tap" data-nav="roulette" onclick="go('roulette')"><span class="ni">🎯</span>探索</button>
     <div class="fab-wrap"><button class="fab tap" onclick="go('register', this)"><span class="fi">＋</span><span class="fl">登録</span></button></div>
     <button class="navb tap" data-nav="cafe" onclick="go('cafe')"><span class="ni">☕</span>喫茶</button>
-    <button class="navb tap" data-nav="dashboard" onclick="go('dashboard')"><span class="ni">📊</span>分析</button>
+    <button class="navb tap" data-nav="dashboard" onclick="go('dashboard')"><span class="ni">🏆</span>人気</button>
     <button class="navb tap" data-nav="mypage" onclick="go('mypage')"><span class="ni">👤</span>マイ</button>
   </nav>
 </div>
@@ -627,11 +626,11 @@ nav.dock button.navb.on::after{ content:""; position:absolute; bottom:-1px; widt
    ========================================================= */
 const OPT = {
   people:["1人","2人","3〜4人","5人以上"],
-  companion:["ひとりで","気の置けない友人","気の置ける友人","恋人","好きな人","先輩","後輩","ゼミ・サークルの団体"],
+  companion:["ひとりで","仲のいい友達","友達","恋人","気になる人","先輩","後輩","サークル・ゼミ仲間"],
   time:["モーニング","ランチ","カフェタイム","ディナー","深夜","終電逃し後"],
   price:["1000円未満","1000〜2000円","2000〜3000円","3000〜5000円","5000円以上"],
   reserve:["予約必須","予約可能","予約してもしなくてもいい","予約不可"],
-  smoke:["完全禁煙","分煙","禁煙より","喫煙より","喫煙可"],
+  smoke:["禁煙","喫煙"],
   mood:["和食","洋食","中華","アジア系","その他海外料理","がっつり・こってり","あっさり・ヘルシー","軽食・甘いもの"],
   niche:["定番","中堅","秘境"],
   yum:["圧倒的美味","コスパ重視","中毒性あり"],
@@ -640,24 +639,24 @@ const OPT = {
   break:["昼休み","空きコマ","放課後・全休"]
 };
 const SEED = [
-  {emoji:"🍜",name:"まかない食堂 こめ太郎",mood:["和食","がっつり・こってり"],dist:3,price:"1000円未満",reserve:"予約不可",smoke:"完全禁煙",niche:"定番",yum:["コスパ重視","中毒性あり"],owner:"フレンドリー",atmos:["ワイワイ・ガヤガヤ"],people:["1人","2人","3〜4人"],companion:["ひとりで","気の置けない友人","後輩"],time:["ランチ","ディナー"],brk:["昼休み","空きコマ"],point:"学割で大盛り無料。チキン南蛮定食が500円台という大学生の聖地。とにかく腹を満たしたい日に。"},
-  {emoji:"🍝",name:"トラットリア・ボーノ",mood:["洋食","西洋系"],dist:7,price:"2000〜3000円",reserve:"予約可能",smoke:"完全禁煙",niche:"中堅",yum:["圧倒的美味"],owner:"適度な距離感",atmos:["おしゃれ・洗練"],people:["2人"],companion:["恋人","好きな人"],time:["ディナー"],brk:["放課後・全休"],point:"間接照明の効いた隠れ家イタリアン。デートで失敗したくない夜に。自家製生パスタが評判。"},
-  {emoji:"🥟",name:"町中華 龍王軒",mood:["中華","がっつり・こってり"],dist:5,price:"1000〜2000円",reserve:"予約不可",smoke:"分煙",niche:"定番",yum:["コスパ重視","中毒性あり"],owner:"フレンドリー",atmos:["ディープ・レトロ"],people:["1人","2人","3〜4人"],companion:["気の置けない友人","先輩"],time:["ランチ","ディナー","深夜"],brk:["昼休み","放課後・全休"],point:"昭和から続く町中華。半チャンラーメンの破壊力。深夜まで開いてて飲んだ後の〆にも最強。"},
-  {emoji:"🍢",name:"おでん横丁 だしの",mood:["和食","あっさり・ヘルシー"],dist:9,price:"2000〜3000円",reserve:"予約可能",smoke:"喫煙より",niche:"秘境",yum:["圧倒的美味"],owner:"フレンドリー",atmos:["ディープ・レトロ"],people:["2人","3〜4人"],companion:["先輩","気の置ける友人"],time:["ディナー","深夜"],brk:["放課後・全休"],point:"路地裏の知る人ぞ知るおでん屋。大将の人柄に常連が集う。先輩に連れてってもらった感を演出できる。"},
-  {emoji:"🍛",name:"スパイス研究室 マサラ",mood:["アジア系","あっさり・ヘルシー"],dist:6,price:"1000〜2000円",reserve:"予約してもしなくてもいい",smoke:"完全禁煙",niche:"中堅",yum:["中毒性あり"],owner:"適度な距離感",atmos:["おしゃれ・洗練"],people:["1人","2人"],companion:["ひとりで","気の置けない友人"],time:["ランチ","ディナー"],brk:["昼休み","空きコマ"],point:"週替わりの本格スパイスカレー。ひとりランチでも居心地◎。汗かいて午後の授業をリセット。"},
-  {emoji:"🍖",name:"七輪焼肉 もくもく亭",mood:["和食","がっつり・こってり"],dist:11,price:"3000〜5000円",reserve:"予約必須",smoke:"分煙",niche:"中堅",yum:["圧倒的美味"],owner:"フレンドリー",atmos:["ワイワイ・ガヤガヤ"],people:["3〜4人","5人以上"],companion:["ゼミ・サークルの団体","気の置けない友人"],time:["ディナー"],brk:["放課後・全休"],point:"打ち上げの王道。コスパのいい食べ放題コースあり。大人数で予約して盛り上がるならここ。"},
+  {emoji:"🍜",name:"まかない食堂 こめ太郎",mood:["和食","がっつり・こってり"],dist:3,price:"1000円未満",reserve:"予約不可",smoke:"完全禁煙",niche:"定番",yum:["コスパ重視","中毒性あり"],owner:"フレンドリー",atmos:["ワイワイ・ガヤガヤ"],people:["1人","2人","3〜4人"],companion:["ひとりで","仲のいい友達","後輩"],time:["ランチ","ディナー"],brk:["昼休み","空きコマ"],point:"学割で大盛り無料。チキン南蛮定食が500円台という大学生の聖地。とにかく腹を満たしたい日に。"},
+  {emoji:"🍝",name:"トラットリア・ボーノ",mood:["洋食","西洋系"],dist:7,price:"2000〜3000円",reserve:"予約可能",smoke:"完全禁煙",niche:"中堅",yum:["圧倒的美味"],owner:"適度な距離感",atmos:["おしゃれ・洗練"],people:["2人"],companion:["恋人","気になる人"],time:["ディナー"],brk:["放課後・全休"],point:"間接照明の効いた隠れ家イタリアン。デートで失敗したくない夜に。自家製生パスタが評判。"},
+  {emoji:"🥟",name:"町中華 龍王軒",mood:["中華","がっつり・こってり"],dist:5,price:"1000〜2000円",reserve:"予約不可",smoke:"分煙",niche:"定番",yum:["コスパ重視","中毒性あり"],owner:"フレンドリー",atmos:["ディープ・レトロ"],people:["1人","2人","3〜4人"],companion:["仲のいい友達","先輩"],time:["ランチ","ディナー","深夜"],brk:["昼休み","放課後・全休"],point:"昭和から続く町中華。半チャンラーメンの破壊力。深夜まで開いてて飲んだ後の〆にも最強。"},
+  {emoji:"🍢",name:"おでん横丁 だしの",mood:["和食","あっさり・ヘルシー"],dist:9,price:"2000〜3000円",reserve:"予約可能",smoke:"喫煙より",niche:"秘境",yum:["圧倒的美味"],owner:"フレンドリー",atmos:["ディープ・レトロ"],people:["2人","3〜4人"],companion:["先輩","友達"],time:["ディナー","深夜"],brk:["放課後・全休"],point:"路地裏の知る人ぞ知るおでん屋。大将の人柄に常連が集う。先輩に連れてってもらった感を演出できる。"},
+  {emoji:"🍛",name:"スパイス研究室 マサラ",mood:["アジア系","あっさり・ヘルシー"],dist:6,price:"1000〜2000円",reserve:"予約してもしなくてもいい",smoke:"完全禁煙",niche:"中堅",yum:["中毒性あり"],owner:"適度な距離感",atmos:["おしゃれ・洗練"],people:["1人","2人"],companion:["ひとりで","仲のいい友達"],time:["ランチ","ディナー"],brk:["昼休み","空きコマ"],point:"週替わりの本格スパイスカレー。ひとりランチでも居心地◎。汗かいて午後の授業をリセット。"},
+  {emoji:"🍖",name:"七輪焼肉 もくもく亭",mood:["和食","がっつり・こってり"],dist:11,price:"3000〜5000円",reserve:"予約必須",smoke:"分煙",niche:"中堅",yum:["圧倒的美味"],owner:"フレンドリー",atmos:["ワイワイ・ガヤガヤ"],people:["3〜4人","5人以上"],companion:["サークル・ゼミ仲間","仲のいい友達"],time:["ディナー"],brk:["放課後・全休"],point:"打ち上げの王道。コスパのいい食べ放題コースあり。大人数で予約して盛り上がるならここ。"},
   {emoji:"🍣",name:"立ち寿司 まわらない",mood:["和食"],dist:8,price:"3000〜5000円",reserve:"予約可能",smoke:"完全禁煙",niche:"秘境",yum:["圧倒的美味"],owner:"適度な距離感",atmos:["静か・落ち着き"],people:["1人","2人"],companion:["恋人","先輩"],time:["ディナー"],brk:["放課後・全休"],point:"カウンター7席だけの立ち寿司。学生には背伸びだけど、ここぞの日に。ネタの鮮度がガチ。"},
-  {emoji:"🍔",name:"バーガースタンド GABU",mood:["洋食","がっつり・こってり"],dist:4,price:"1000〜2000円",reserve:"予約不可",smoke:"完全禁煙",niche:"中堅",yum:["中毒性あり","コスパ重視"],owner:"フレンドリー",atmos:["おしゃれ・洗練"],people:["1人","2人","3〜4人"],companion:["気の置けない友人","好きな人"],time:["ランチ","カフェタイム","ディナー"],brk:["昼休み","空きコマ"],point:"肉汁あふれるクラフトバーガー。テイクアウトして空きコマにキャンパスのベンチで食べるのが通。"},
+  {emoji:"🍔",name:"バーガースタンド GABU",mood:["洋食","がっつり・こってり"],dist:4,price:"1000〜2000円",reserve:"予約不可",smoke:"完全禁煙",niche:"中堅",yum:["中毒性あり","コスパ重視"],owner:"フレンドリー",atmos:["おしゃれ・洗練"],people:["1人","2人","3〜4人"],companion:["仲のいい友達","気になる人"],time:["ランチ","カフェタイム","ディナー"],brk:["昼休み","空きコマ"],point:"肉汁あふれるクラフトバーガー。テイクアウトして空きコマにキャンパスのベンチで食べるのが通。"},
   {emoji:"🍲",name:"ひとり鍋 ぽかぽか亭",mood:["和食","あっさり・ヘルシー"],dist:10,price:"1000〜2000円",reserve:"予約してもしなくてもいい",smoke:"完全禁煙",niche:"秘境",yum:["中毒性あり"],owner:"完全無干渉",atmos:["静か・落ち着き"],people:["1人","2人"],companion:["ひとりで"],time:["ランチ","ディナー","深夜"],brk:["空きコマ","放課後・全休"],point:"一人用の小鍋がウリ。誰にも干渉されず黙々と食べたい日に。野菜たっぷりで罪悪感ゼロ。"},
-  {emoji:"🌮",name:"タコス酒場 アミーゴ",mood:["その他海外料理","がっつり・こってり"],dist:13,price:"2000〜3000円",reserve:"予約可能",smoke:"喫煙より",niche:"秘境",yum:["中毒性あり"],owner:"フレンドリー",atmos:["ワイワイ・ガヤガヤ"],people:["3〜4人","5人以上"],companion:["気の置けない友人","ゼミ・サークルの団体"],time:["ディナー","深夜","終電逃し後"],brk:["放課後・全休"],point:"陽気なメキシカン。終電逃した時の避難所。ノリで盛り上がりたいサークルの二次会に。"},
+  {emoji:"🌮",name:"タコス酒場 アミーゴ",mood:["その他海外料理","がっつり・こってり"],dist:13,price:"2000〜3000円",reserve:"予約可能",smoke:"喫煙より",niche:"秘境",yum:["中毒性あり"],owner:"フレンドリー",atmos:["ワイワイ・ガヤガヤ"],people:["3〜4人","5人以上"],companion:["仲のいい友達","サークル・ゼミ仲間"],time:["ディナー","深夜","終電逃し後"],brk:["放課後・全休"],point:"陽気なメキシカン。終電逃した時の避難所。ノリで盛り上がりたいサークルの二次会に。"},
   {emoji:"🍤",name:"天ぷら定食 さくさく庵",mood:["和食","がっつり・こってり"],dist:6,price:"1000〜2000円",reserve:"予約不可",smoke:"完全禁煙",niche:"定番",yum:["コスパ重視"],owner:"適度な距離感",atmos:["静か・落ち着き"],people:["1人","2人"],companion:["ひとりで","先輩","後輩"],time:["ランチ"],brk:["昼休み"],point:"揚げたて天丼が安い。回転が早いから昼休みのサクッと飯に最適。先輩との昼ごはんにも無難。"},
-  {emoji:"🍛",name:"欧風カレー 琥珀",mood:["洋食","がっつり・こってり"],dist:7,price:"1000〜2000円",reserve:"予約してもしなくてもいい",smoke:"完全禁煙",niche:"中堅",yum:["圧倒的美味","中毒性あり"],owner:"完全無干渉",atmos:["静か・落ち着き"],people:["1人","2人"],companion:["ひとりで","好きな人"],time:["ランチ","カフェタイム","ディナー"],brk:["空きコマ"],point:"2日煮込んだ濃厚ルー。BGMはジャズ、静かに過ごせる。読書しながらのひとり飯にもうってつけ。"},
-  {emoji:"🥘",name:"スンドゥブ専門 火花",mood:["アジア系","がっつり・こってり"],dist:5,price:"1000〜2000円",reserve:"予約不可",smoke:"完全禁煙",niche:"定番",yum:["中毒性あり","コスパ重視"],owner:"フレンドリー",atmos:["ワイワイ・ガヤガヤ"],people:["1人","2人","3〜4人"],companion:["気の置けない友人","後輩"],time:["ランチ","ディナー"],brk:["昼休み","放課後・全休"],point:"辛さ7段階のスンドゥブ。汗だくになりながら友達と挑戦するのが楽しい。ごはんおかわり自由。"},
-  {emoji:"🧆",name:"ケバブ屋台 イスタン",mood:["その他海外料理","がっつり・こってり"],dist:2,price:"1000円未満",reserve:"予約不可",smoke:"完全禁煙",niche:"中堅",yum:["コスパ重視","中毒性あり"],owner:"フレンドリー",atmos:["ワイワイ・ガヤガヤ"],people:["1人","2人"],companion:["ひとりで","気の置けない友人"],time:["ランチ","カフェタイム","深夜"],brk:["昼休み","空きコマ","放課後・全休"],point:"大学門前の屋台。500円でボリューム満点のケバブサンド。歩きながら食べられて空きコマの味方。"},
-  {emoji:"🍰",name:"純喫茶 ことり",mood:["軽食・甘いもの"],dist:8,price:"1000〜2000円",reserve:"予約不可",smoke:"完全禁煙",niche:"秘境",yum:["圧倒的美味"],owner:"完全無干渉",atmos:["静か・落ち着き","ディープ・レトロ"],people:["1人","2人"],companion:["ひとりで","好きな人"],time:["モーニング","カフェタイム"],brk:["空きコマ","放課後・全休"],point:"昭和レトロな純喫茶。分厚いホットケーキと深煎り珈琲。長居しても怒られない。",cafe:true,cafeTags:["読書向き","完全禁煙","長居しやすい","静か","レトロ"]},
+  {emoji:"🍛",name:"欧風カレー 琥珀",mood:["洋食","がっつり・こってり"],dist:7,price:"1000〜2000円",reserve:"予約してもしなくてもいい",smoke:"完全禁煙",niche:"中堅",yum:["圧倒的美味","中毒性あり"],owner:"完全無干渉",atmos:["静か・落ち着き"],people:["1人","2人"],companion:["ひとりで","気になる人"],time:["ランチ","カフェタイム","ディナー"],brk:["空きコマ"],point:"2日煮込んだ濃厚ルー。BGMはジャズ、静かに過ごせる。読書しながらのひとり飯にもうってつけ。"},
+  {emoji:"🥘",name:"スンドゥブ専門 火花",mood:["アジア系","がっつり・こってり"],dist:5,price:"1000〜2000円",reserve:"予約不可",smoke:"完全禁煙",niche:"定番",yum:["中毒性あり","コスパ重視"],owner:"フレンドリー",atmos:["ワイワイ・ガヤガヤ"],people:["1人","2人","3〜4人"],companion:["仲のいい友達","後輩"],time:["ランチ","ディナー"],brk:["昼休み","放課後・全休"],point:"辛さ7段階のスンドゥブ。汗だくになりながら友達と挑戦するのが楽しい。ごはんおかわり自由。"},
+  {emoji:"🧆",name:"ケバブ屋台 イスタン",mood:["その他海外料理","がっつり・こってり"],dist:2,price:"1000円未満",reserve:"予約不可",smoke:"完全禁煙",niche:"中堅",yum:["コスパ重視","中毒性あり"],owner:"フレンドリー",atmos:["ワイワイ・ガヤガヤ"],people:["1人","2人"],companion:["ひとりで","仲のいい友達"],time:["ランチ","カフェタイム","深夜"],brk:["昼休み","空きコマ","放課後・全休"],point:"大学門前の屋台。500円でボリューム満点のケバブサンド。歩きながら食べられて空きコマの味方。"},
+  {emoji:"🍰",name:"純喫茶 ことり",mood:["軽食・甘いもの"],dist:8,price:"1000〜2000円",reserve:"予約不可",smoke:"完全禁煙",niche:"秘境",yum:["圧倒的美味"],owner:"完全無干渉",atmos:["静か・落ち着き","ディープ・レトロ"],people:["1人","2人"],companion:["ひとりで","気になる人"],time:["モーニング","カフェタイム"],brk:["空きコマ","放課後・全休"],point:"昭和レトロな純喫茶。分厚いホットケーキと深煎り珈琲。長居しても怒られない。",cafe:true,cafeTags:["読書向き","完全禁煙","長居しやすい","静か","レトロ"]},
   {emoji:"📚",name:"本と珈琲 余白",mood:["軽食・甘いもの"],dist:12,price:"1000〜2000円",reserve:"予約不可",smoke:"完全禁煙",niche:"秘境",yum:["圧倒的美味"],owner:"完全無干渉",atmos:["静か・落ち着き"],people:["1人"],companion:["ひとりで"],time:["モーニング","カフェタイム"],brk:["空きコマ","放課後・全休"],point:"壁一面が本棚のブックカフェ。私語厳禁の集中席あり。レポートが捗りすぎる隠れ家。",cafe:true,cafeTags:["読書向き","完全禁煙","長居しやすい","静か","電源あり","Wi-Fi"]},
-  {emoji:"☕",name:"喫茶 こもれび",mood:["軽食・甘いもの"],dist:15,price:"1000〜2000円",reserve:"予約不可",smoke:"完全禁煙",niche:"秘境",yum:["中毒性あり"],owner:"フレンドリー",atmos:["静か・落ち着き","ディープ・レトロ"],people:["1人","2人"],companion:["ひとりで","気の置ける友人"],time:["モーニング","カフェタイム","ランチ"],brk:["放課後・全休"],point:"古民家を改装した一軒家カフェ。庭を眺めながらの自家製プリンが絶品。時間がゆっくり流れる。",cafe:true,cafeTags:["読書向き","完全禁煙","長居しやすい","Wi-Fi"]},
-  {emoji:"🫖",name:"日本茶スタンド 一服",mood:["軽食・甘いもの","あっさり・ヘルシー"],dist:6,price:"1000円未満",reserve:"予約不可",smoke:"完全禁煙",niche:"中堅",yum:["圧倒的美味"],owner:"適度な距離感",atmos:["おしゃれ・洗練","静か・落ち着き"],people:["1人","2人"],companion:["ひとりで","好きな人"],time:["カフェタイム","空きコマ"],brk:["空きコマ"],point:"こだわりの日本茶と和菓子のスタンド。コンパクトだけど落ち着く。授業の合間のリセットに。",cafe:true,cafeTags:["完全禁煙","静か","電源あり"]}
+  {emoji:"☕",name:"喫茶 こもれび",mood:["軽食・甘いもの"],dist:15,price:"1000〜2000円",reserve:"予約不可",smoke:"完全禁煙",niche:"秘境",yum:["中毒性あり"],owner:"フレンドリー",atmos:["静か・落ち着き","ディープ・レトロ"],people:["1人","2人"],companion:["ひとりで","友達"],time:["モーニング","カフェタイム","ランチ"],brk:["放課後・全休"],point:"古民家を改装した一軒家カフェ。庭を眺めながらの自家製プリンが絶品。時間がゆっくり流れる。",cafe:true,cafeTags:["読書向き","完全禁煙","長居しやすい","Wi-Fi"]},
+  {emoji:"🫖",name:"日本茶スタンド 一服",mood:["軽食・甘いもの","あっさり・ヘルシー"],dist:6,price:"1000円未満",reserve:"予約不可",smoke:"完全禁煙",niche:"中堅",yum:["圧倒的美味"],owner:"適度な距離感",atmos:["おしゃれ・洗練","静か・落ち着き"],people:["1人","2人"],companion:["ひとりで","気になる人"],time:["カフェタイム","空きコマ"],brk:["空きコマ"],point:"こだわりの日本茶と和菓子のスタンド。コンパクトだけど落ち着く。授業の合間のリセットに。",cafe:true,cafeTags:["完全禁煙","静か","電源あり"]}
 ];
 const QUIZ = [
   {q:"「半チャンラーメン」が名物の、昭和から続く大学前の町中華はどこ？",opts:["町中華 龍王軒","トラットリア・ボーノ","本と珈琲 余白"],a:0,exp:"正解は町中華 龍王軒！半チャンラーメンの破壊力に加え、深夜まで営業しているので飲んだ後の〆にも最強です。",link:"町中華 龍王軒"},
@@ -858,7 +857,7 @@ function migrateStep1(meId){
   let v1=null; try{ v1=JSON.parse(localStorage.getItem('cocoico_v1')||'null'); }catch(e){}
   if(v1){
     const N2I=nameToIdMap();
-    (v1.registered||[]).forEach(s=>{ try{ let ex=db.first('restaurants',r=>r.name.replace(/\s/g,'')===String(s.name||'').replace(/\s/g,'')); if(!ex){ ex=db.insert('restaurants',{ name:s.name, emoji:s.emoji||(s.cafe?'☕':'🍽️'), mood:s.mood||[], dist:s.dist||5, price:s.price||'1000〜2000円', reserve:s.reserve||'予約してもしなくてもいい', smoke:s.smoke||'分煙', niche:s.niche||'中堅', yum:s.yum||['コスパ重視'], owner:s.owner||'フレンドリー', atmos:s.atmos||['ワイワイ・ガヤガヤ'], people:s.people||['1人','2人'], companion:s.companion||['気の置けない友人'], time:s.time||['ランチ','ディナー'], brk:s.brk||['放課後・全休'], point:s.point||'', cafe:s.cafe?1:0, cafe_tags:s.cafeTags||[], created_by:meId, is_seed:0, created_at:Date.now() }); } N2I[ex.name]=ex.id; }catch(e){} });
+    (v1.registered||[]).forEach(s=>{ try{ let ex=db.first('restaurants',r=>r.name.replace(/\s/g,'')===String(s.name||'').replace(/\s/g,'')); if(!ex){ ex=db.insert('restaurants',{ name:s.name, emoji:s.emoji||(s.cafe?'☕':'🍽️'), mood:s.mood||[], dist:s.dist||5, price:s.price||'1000〜2000円', reserve:s.reserve||'予約してもしなくてもいい', smoke:s.smoke||'分煙', niche:s.niche||'中堅', yum:s.yum||['コスパ重視'], owner:s.owner||'フレンドリー', atmos:s.atmos||['ワイワイ・ガヤガヤ'], people:s.people||['1人','2人'], companion:s.companion||['仲のいい友達'], time:s.time||['ランチ','ディナー'], brk:s.brk||['放課後・全休'], point:s.point||'', cafe:s.cafe?1:0, cafe_tags:s.cafeTags||[], created_by:meId, is_seed:0, created_at:Date.now() }); } N2I[ex.name]=ex.id; }catch(e){} });
     (v1.favs||[]).forEach(nm=>{ const rid=N2I[nm]||(db.first('restaurants',r=>r.name===nm)||{}).id; if(rid){ try{ db.insert('favorites',{user_id:meId, restaurant_id:rid, created_at:Date.now()}); }catch(e){} } });
     if(typeof v1.points==='number') db.update('users',meId,{points:v1.points});
     if(typeof v1.quizCorrect==='number') db.update('users',meId,{quiz_correct:v1.quizCorrect, title:titleFor(v1.quizCorrect)});
@@ -888,9 +887,9 @@ function recommendFor(rid,k,minCo){ k=k||3; minCo=minCo||1; if(favSetsDirty||!fa
 function cooccurHtml(rid){
   if(!rid) return '';
   const recs=recommendFor(rid,3,1);
-  if(!recs.length) return `<div class="cooccur"><div class="cooccur-h">❤️ この店が好きな人はこれも</div><div class="cooccur-empty">まだ共起データが少ない店です。お気に入り登録でおすすめが育ちます🌱</div></div>`;
+  if(!recs.length) return `<div class="cooccur"><div class="cooccur-h">❤️ この店が好きな人はこれも</div><div class="cooccur-empty">まだおすすめできる店が少ないみたい。お気に入り登録でおすすめが育ちます🌱</div></div>`;
   const cards=recs.map(c=>{ const r=db.get('restaurants',c.restaurant_id); if(!r) return ''; return `<div class="co-card"><div class="co-emoji">${r.emoji||'🍽️'}</div><div class="co-name">${esc(r.name)}</div><div class="co-bar"><i style="width:${c.percent}%"></i></div><div class="co-meta">一致度${c.percent}% ・ 共通${c.common}人</div></div>`; }).join('');
-  return `<div class="cooccur"><div class="cooccur-h">❤️ この店が好きな人はこれも（Jaccard共起）</div><div class="co-row">${cards}</div></div>`;
+  return `<div class="cooccur"><div class="cooccur-h">❤️ この店が好きな人はこれも</div><div class="co-row">${cards}</div></div>`;
 }
 
 /* =========================================================
@@ -905,7 +904,7 @@ function toggleFavId(rid, el){
   favSetsDirty=true; maybeReengage('fav'); refreshStats(false);
 }
 function restaurantIdByName(name){ const r=db.first('restaurants',x=>x.name===name) || db.first('restaurants',x=>x.name.replace(/\s/g,'')===String(name).replace(/\s/g,'')); return r? r.id : null; }
-function registrantLabel(r){ if(!r||!r.created_by||r.created_by==='seed_system'||r.is_seed===1) return '運営'; const u=db.get('users',r.created_by); return u? u.handle : '誰か'; }
+function regByHtml(r){ if(!r||!r.created_by||r.created_by==='seed_system'||r.is_seed===1) return ''; const me=r.created_by===currentUserId(); const u=db.get('users',r.created_by); return `<span class="reg-by">${me?'🙌 あなたが登録':'by '+esc(u?u.handle:'誰か')}</span>`; }
 
 /* ---------- プロフィール切替 ---------- */
 function listProfiles(){ return { real: db.where('users',{is_seed:0}).sort((a,b)=>(b.points||0)-(a.points||0)), seed: db.where('users',{is_seed:1}).sort((a,b)=>(b.points||0)-(a.points||0)) }; }
@@ -957,63 +956,15 @@ function barChart(map, total, palette){
 }
 function DASH_render(){
   const body=document.getElementById('dashBody'); if(!body) return;
-  const rows=DASH_metrics(); const top=rows.slice(0,10);
-  const maxScore=Math.max(1, ...rows.map(x=>x.score));
+  const rows=DASH_metrics(); const top=rows.slice(0,10);   // 並び順は人気度（登録/お気に入り/当選）で算出。表示は数字を出さず自然に
+  const maxFav=Math.max(1, ...rows.map(x=>x.fav));
   const medal=['🥇','🥈','🥉'];
-  const rankHtml=top.map((x,i)=>{ const r=x.r; const w=s=>Math.round(s/maxScore*100);
+  const rankHtml=top.map((x,i)=>{ const r=x.r;
     return `<div class="rank-row"><div class="rank-no">${i<3?medal[i]:(i+1)}</div><div class="rank-emoji">${r.emoji}</div>
       <div class="rank-main"><div class="rank-name">${esc(r.name)} ${nicheBadge(r.niche)}</div>
-        <div class="rank-bar"><i class="seg-reg" style="width:${w(3*x.reg)}%"></i><i class="seg-fav" style="width:${w(2*x.fav)}%"></i><i class="seg-spin" style="width:${w(1*x.spin)}%"></i></div>
-        <div class="rank-sub">登録${x.reg} ・ ❤️${x.fav} ・ 🎯${x.spin}</div></div>
-      <div class="rank-score num">${x.score}</div></div>`; }).join('');
-  // 記述統計
-  const spinArr=rows.map(x=>x.spin), favArr=rows.map(x=>x.fav), distArr=db.all('restaurants').map(r=>r.dist);
-  const statCard=(title,a,unit)=>{ const mu=stats.mean(a),md=stats.median(a),vp=stats.variance(a,false),sd=stats.std(a,false);
-    const interp = mu>md? '平均>中央値：一部の人気店に集中（右に裾）' : (mu<md? '平均<中央値：人気が広く分散' : '平均≒中央値：ばらつき小');
-    return `<div class="stat-card"><div class="stat-t">${title}</div><div class="stat-grid"><div><b class="num">${fmt(mu,2)}</b><small>平均</small></div><div><b class="num">${fmt(md,1)}</b><small>中央値</small></div><div><b class="num">${fmt(vp,2)}</b><small>母分散</small></div><div><b class="num">${fmt(sd,2)}</b><small>標準偏差σ</small></div></div><div class="stat-i">${interp}</div></div>`; };
-  // 度数分布
-  const nicheFreq=db.countBy(db.all('restaurants'), r=>r.niche);
-  const priceFreq=db.countBy(db.all('restaurants'), r=>r.price);
-  const distFreq=db.countBy(db.all('restaurants'), r=>{ const b=Math.floor(r.dist/5)*5; return '徒歩'+b+'〜'+(b+4)+'分'; });
-  const moodFlat=db.all('restaurants').flatMap(r=>r.mood||[]); const moodFreq=new Map(); for(const m of moodFlat) moodFreq.set(m,(moodFreq.get(m)||0)+1);
-  const moodTop=new Map([...moodFreq.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8));
-  const totR=db.count('restaurants');
-  const PAL=['#FF6A2B','#FFB02E','#C0341C','#FF8A3D','#FFC23C','#E5431A','#FF7A2F','#FFD25A'];
-  // クイズ難易度
-  const qrows=db.all('quiz_questions').map(q=>{ const st=quizStats(q.id); const pts=pointsFor(st.p); return {q, st, pts, ev:expectedPt(st.p,pts)}; }).sort((a,b)=>b.pts-a.pts);
-  const pArr=qrows.map(x=> x.st.p==null?0:x.st.p);
-  const quizHtml=qrows.map(x=>`<div class="qd-row"><div class="qd-q">${esc(x.q.q.slice(0,22))}…</div><div class="qd-bar"><i style="width:${Math.round((x.st.p||0)*100)}%"></i></div><div class="qd-v">正答${x.st.p==null?'—':Math.round(x.st.p*100)+'%'} <small>n=${x.st.n}</small> ・ <b>${x.pts}pt</b> ・ 期待${x.ev}</div></div>`).join('');
-  // A/Bテスト
-  const inc = (document.getElementById('abIncludeSeed')||{}).checked;
-  const agg=abAggregate(inc===undefined?true:inc); const ab=computeAbResult(agg);
-  let abHtml;
-  if(!ab.ok){ abHtml='<div class="cooccur-empty">A/Bどちらかのデータが不足しています。</div>'; }
-  else {
-    const w=p=>Math.round(p*100);
-    abHtml=`<div class="ab-bars">
-      <div class="ab-bar"><span class="ab-l">A（控えめ）</span><span class="ab-t"><i style="width:${w(ab.pA)}%;background:var(--grad-primary)"></i></span><span class="ab-v">${fmt(ab.pA*100,1)}% <small>(${ab.xA}/${ab.nA})</small></span></div>
-      <div class="ab-bar"><span class="ab-l">B（派手）</span><span class="ab-t"><i style="width:${w(ab.pB)}%;background:var(--grad-gold)"></i></span><span class="ab-v">${fmt(ab.pB*100,1)}% <small>(${ab.xB}/${ab.nB})</small></span></div></div>
-      <div class="ab-res">
-        <span class="ab-badge ${ab.sig?'sig':'ns'}">${ab.sig?'有意差あり':'誤差の範囲'}</span>
-        ${ab.winner?`<b>勝者: ${ab.winner}</b>`:'<b>勝者: 判定保留</b>'}
-        <div class="ab-nums num">z=${fmt(ab.z,3)} ・ 両側p=${fmt(ab.pval,4)} ・ 95%CI[${fmt(ab.ci.lo,3)}, ${fmt(ab.ci.hi,3)}]</div>
-      </div>
-      <details class="ab-detail"><summary>式と計算</summary>p̂=x/n、p̂_pool=(x_A+x_B)/(n_A+n_B)、SE=√(p̂_pool(1-p̂_pool)(1/n_A+1/n_B))、z=(p̂_A-p̂_B)/SE。|z|>1.96 で有意(両側5%)。CIが0をまたがなければ有意と一致。</details>`;
-  }
-  body.innerHTML=`
-    <div class="dash-block"><h3 class="dash-h">🏆 人気店ランキング TOP10</h3><div class="dash-note">スコア = 3×登録 + 2×お気に入り + 1×ルーレット当選</div>${rankHtml||'<div class="cooccur-empty">データなし</div>'}</div>
-    <div class="dash-block"><h3 class="dash-h">📈 記述統計（平均・中央値・分散）</h3>${statCard('ルーレット当選回数',spinArr)}${statCard('お気に入り数',favArr)}${statCard('大学からの距離(分)',distArr)}</div>
-    <div class="dash-block"><h3 class="dash-h">📊 度数分布</h3>
-      <div class="freq-t">ニッチ度</div>${barChart(nicheFreq,totR,PAL)}
-      <div class="freq-t">価格帯</div>${barChart(priceFreq,totR,PAL)}
-      <div class="freq-t">人気タグ(上位)</div>${barChart(moodTop, moodFlat.length, PAL)}
-      <div class="freq-t">距離ビン</div>${barChart(distFreq,totR,PAL)}</div>
-    <div class="dash-block"><h3 class="dash-h">🧠 クイズ難易度（期待値配点）</h3><div class="dash-note">配点 = round(5+25×(1-正答率))、難問ほど高得点</div>${quizHtml}
-      <div class="stat-card" style="margin-top:10px"><div class="stat-t">全6問 正答率サマリ</div><div class="stat-grid"><div><b class="num">${fmt(stats.mean(pArr)*100,0)}%</b><small>平均</small></div><div><b class="num">${fmt(stats.median(pArr)*100,0)}%</b><small>中央値</small></div><div><b class="num">${fmt(stats.variance(pArr,false),3)}</b><small>母分散</small></div></div></div></div>
-    <div class="dash-block"><h3 class="dash-h">🧪 称賛演出 A/Bテスト（2標本比率z検定）</h3>
-      <label class="ab-toggle"><input type="checkbox" id="abIncludeSeed" ${inc===false?'':'checked'} onchange="DASH_render()"> コミュニティ込みで集計</label>
-      <div class="dash-note">登録時の称賛モーダル A=控えめ / B=派手 の「再エンゲージ率」を比較</div>${abHtml}</div>
-    <div class="dash-block tiny">RNG_SEED=${RNG_SEED} 固定 / 擬似コミュニティ ${db.count('users',{is_seed:1})}人 / 全${db.count('restaurants')}店 ・ 数値はリロードしても不変（決定論）</div>`;
+        <div class="rank-bar"><i class="seg-fav" style="width:${Math.max(6,Math.round(x.fav/maxFav*100))}%"></i></div>
+        <div class="rank-sub">❤️ ${x.fav}人がお気に入り${x.spin?` ・ 🎯 ${x.spin}回ヒット`:''}</div></div></div>`; }).join('');
+  body.innerHTML=`<div class="dash-block">${rankHtml||'<div class="cooccur-empty">まだデータがありません。お気に入り登録やルーレットで盛り上げよう！</div>'}</div>`;
 }
 
 /* =========================================================
@@ -1037,10 +988,10 @@ function renderMyPage(){
       <div class="mp-prog"><div class="mp-prog-l">${next? '次の称号「'+next.t+'」まであと '+(next.n-qc)+'問' : '最高称号に到達！'}</div><div class="mp-prog-bar"><i style="width:${prog}%"></i></div></div>
     </div>
     <div class="mp-switch">
-      <label>プロフィール切替（擬似ログイン）</label>
+      <label>プロフィール切替</label>
       <select onchange="login(this.value)">${opt(pf.real,'あなた/実プレイヤー')}${opt(pf.seed,'コミュニティ(擬似)')}</select>
       <button class="btn ghost sm tap" onclick="openNewProfile()">＋ 新規プロフィール</button>
-      <div class="mp-note">※ 認証なしのローカル擬似ログインです（端末内localStorageに保存）。本番はSupabase Authに置換可。</div>
+      <div class="mp-note">※ プロフィールはこの端末に保存されます。切り替えると、その人の視点でお気に入り・おすすめが見られます。</div>
     </div>
     <div class="mp-sec"><h3 class="dash-h">❤️ お気に入り（${favRows.length}）</h3>${favRows.length? favRows.map((r,i)=>restoCard(r,null,i*60,false)).join('') : '<div class="cooccur-empty">まだありません。🔥厳選や☕喫茶でお気に入り登録してみよう。</div>'}</div>
     <div class="mp-sec"><h3 class="dash-h">✨ 登録した店（${myRegs.length}）</h3>${myRegs.length? myRegs.map((r,i)=>restoCard(r,null,i*60,false)).join('') : '<div class="cooccur-empty">まだありません。＋登録から新しい店を開拓しよう。</div>'}</div>`;
@@ -1214,7 +1165,7 @@ function restoCard(r, score, delay, recs){
       <div class="emoji">${r.emoji||'🍽️'}</div>
       <div style="flex:1;min-width:0;">
         <h3>${esc(r.name)}</h3>
-        <div class="meta">📍 大学から徒歩${r.dist}分 ・ ${r.price} ・ ${r.reserve} <span class="reg-by">登録:${esc(registrantLabel(r))}</span></div>
+        <div class="meta">📍 大学から徒歩${r.dist}分 ・ ${r.price} ・ ${r.reserve} ${regByHtml(r)}</div>
         <div class="badges">${nicheBadge(r.niche)}${mood}${yum}${newB}</div>
       </div>${sc}
     </div>
@@ -1297,7 +1248,7 @@ function scoreResto(r,a){
   inc(r.companion,a.companion,25); inc(r.people,a.people,15); inc(r.time,a.time,15);
   inc(r.mood,a.mood,25); inc(r.atmos,a.atmos,20);
   if(a.price&&r.price===a.price) s+=20;
-  if(a.smoke){ if(r.smoke===a.smoke) s+=15; else if((a.smoke==="完全禁煙"||a.smoke==="禁煙より")&&r.smoke==="完全禁煙") s+=10; }
+  if(a.smoke){ const rNon=(r.smoke==="完全禁煙"||r.smoke==="分煙"||r.smoke==="禁煙より"||r.smoke==="禁煙"); if((a.smoke==="禁煙")===rNon) s+=15; }
   s+=Math.max(0,10-r.dist);
   return Math.min(99,s);
 }
@@ -1436,7 +1387,7 @@ function submitRegister(){
   try{
     row=db.insert('restaurants',{ name, emoji:isCafe?'☕':'🍽️', mood:mood.length?mood:['和食'], dist, price,
       reserve:'予約してもしなくてもいい', smoke:isCafe?'完全禁煙':'分煙', niche, yum:['コスパ重視'], owner:'フレンドリー',
-      atmos:[isCafe?'静か・落ち着き':'ワイワイ・ガヤガヤ'], people:['1人','2人'], companion:['気の置けない友人'],
+      atmos:[isCafe?'静か・落ち着き':'ワイワイ・ガヤガヤ'], people:['1人','2人'], companion:['仲のいい友達'],
       time:['ランチ','ディナー'], brk:['放課後・全休'], point, cafe:isCafe?1:0,
       cafe_tags:isCafe?['完全禁煙','読書向き','長居しやすい']:[], created_by:uid, is_seed:0, created_at:Date.now() });
   }catch(e){ addPoints(uid,10); toast('📌','登録ありがとう！ +10ココポイント'); refreshStats(false); return; }
@@ -1447,7 +1398,7 @@ function submitRegister(){
 function showPraiseAB(name, discoverer){
   const uid=currentUserId();
   const group=logImpression(uid);   // A/B群を記録（再エンゲージ計測用）
-  const body=`「${esc(name)}」はまだ誰も知らないお宝店！<br>あなたが <b>${discoverer}</b> 軒目の発見者です。<br><span class="ab-tag">A/Bテスト群: ${group}</span>`;
+  const body=`「${esc(name)}」はまだ誰も知らないお宝店！<br>あなたが <b>${discoverer}</b> 軒目の発見者です。`;
   if(group==='B'){ whiteFlash(); confetti(); sfxFanfare(); showPraise('🏆','新規開拓ありがとう！', body, 50, 0, 0, name, true); }
   else { sfxWin(); showPraise('🎉','登録ありがとう！', body, 50, 0, 0, name, false); }
   refreshStats(false);
@@ -1533,12 +1484,11 @@ function renderQuiz(){
   const idx=QUIZ.indexOf(pool[Math.floor(Math.random()*pool.length)]);
   const qid='q_'+pad2(idx);
   curQuiz={idx, qid, q:QUIZ[idx], answered:false};
-  const st=quizStats(qid); const pts=pointsFor(st.p); const ev=expectedPt(st.p,pts);
-  const prov = st.n<10? ' <span class="qbadge prov">暫定</span>' : '';
+  const st=quizStats(qid); const pts=pointsFor(st.p);
+  const stars = pts>=23?'★★★': (pts>=15?'★★☆':'★☆☆');
   const badges=`<div class="qbadges">
-    <span class="qbadge">📊 全体正答率 ${st.p==null?'—':Math.round(st.p*100)+'%'} <small>(n=${st.n})</small></span>${prov}
-    <span class="qbadge">🎯 配点 ${pts}pt</span>
-    <span class="qbadge">💡 期待獲得 ${ev}pt</span></div>`;
+    <span class="qbadge">難易度 ${stars}</span>
+    <span class="qbadge">正解で +${pts}pt</span></div>`;
   document.getElementById('quizCard').innerHTML=
     `<div class="qnum">Q. 街のご飯屋クイズ</div>${badges}<div class="qtext">${esc(curQuiz.q.q)}</div>
      <div class="qopts">${curQuiz.q.opts.map((o,i)=>`<button class="qopt tap" data-k="${'ABC'[i]}" onclick="answerQuiz(${i})">${esc(o)}</button>`).join('')}</div>`;
@@ -1563,8 +1513,7 @@ function answerQuiz(i){
   if(ok&&combo>1){ cv.style.transform='skewX(-6deg) scale(1.3)'; setTimeout(()=>cv.style.transform='skewX(-6deg)',200); }
   const linked=db.first('restaurants',r=>r.name===curQuiz.q.link);
   document.getElementById('quizCard').insertAdjacentHTML('beforeend',
-    `<div class="explain"><b>${ok?('⭕ 正解！ +'+pts+'ココポイント'+(pts>=20?'（難問ボーナス）':'')+(combo>1?` 🔥${combo}コンボ！`:'')):('❌ 残念！（配点'+pts+'ptの問題でした）')}</b><br>${esc(curQuiz.q.exp)}
-      <div class="explain-ev">📊 全体正答率 ${p==null?'—':Math.round(p*100)+'%'} ／ 🎯配点 ${pts}pt ／ 💡期待獲得 ${expectedPt(p,pts)}pt</div>
+    `<div class="explain"><b>${ok?('⭕ 正解！ +'+pts+'ポイント'+(pts>=23?'（難問ボーナス）':'')+(combo>1?` 🔥${combo}コンボ！`:'')):'❌ 残念！'}</b><br>${esc(curQuiz.q.exp)}
       <div class="lead-next">👇 次はこの店に行ってみよう！</div></div>
      ${linked?restoCard(linked,null,0):''}
      <button class="btn sm tap" onclick="renderQuiz()" style="margin-top:8px;">次の問題へ ▶</button>`);
@@ -1608,7 +1557,7 @@ function cafeCard(r,delay){
     <span class="rarity"></span>
     <div class="rtop"><div class="emoji">${r.emoji}</div>
       <div style="flex:1;min-width:0;"><h3>${esc(r.name)}</h3>
-        <div class="meta">📍 大学から徒歩${r.dist}分 ・ ${r.price} <span class="reg-by">登録:${esc(registrantLabel(r))}</span></div>
+        <div class="meta">📍 大学から徒歩${r.dist}分 ・ ${r.price} ${regByHtml(r)}</div>
         <div class="badges">${tags}${mine?'<span class="badge b-new">✨ あなたの発見</span>':''}</div></div></div>
     <p class="point">💬 ${esc(r.point)}</p>
     <div class="links">
